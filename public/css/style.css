@@ -13,11 +13,26 @@
 .map {
     height: 800px;
     width: 100%;
+    position: relative;
+    z-index: 2;
 }
 
 #popup-content {
     background-color: aliceblue;
-    height: 500px;
-    width: 200px;
+    height: 600px;
+    width: 400px;
     border-radius: 20px;
+    text-align: center
+}
+
+#filter {
+    background-color: aliceblue;
+    width: 300px;
+    height: 600px;
+    position: absolute;
+    z-index: 1;
+}
+
+#container {
+    position: relative
 }
