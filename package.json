@@ -1,5 +1,5 @@
 {
-  "name": "CS4241 Assignment 4",
+  "name": "venice_shops",
   "version": "1.0",
   "description": "Creative Coding",
   "author": "Mago Sheehy",
@@ -11,6 +11,7 @@
     "JSON": "^1.0.0",
     "express": "^4.17.1",
     "fs": "0.0.1-security",
+    "mongodb": "^4.1.3",
     "ol": "^6.8.1",
     "serve-favicon": "^2.5.0"
   },

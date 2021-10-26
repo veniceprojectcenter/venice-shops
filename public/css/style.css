@@ -38,3 +38,15 @@
 h1, h3{
     text-align: center;
 }
+
+.scrollButton{
+    width: 120px;
+    height: 40px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+#editButton{
+    margin-right: 260px;
+    margin-top: 15px;
+}
