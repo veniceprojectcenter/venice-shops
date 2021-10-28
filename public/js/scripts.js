@@ -29,11 +29,20 @@ let allYears = []
 let allSestieres = []
 let allStores = []
 
+let sestiereOptions = []
+let storesOptions = []
+
 const yearFilterDefault = document.querySelector('#yearFilter').innerHTML
 const sestiereFilterDefault = document.querySelector('#sestiereFilter').innerHTML
 const storeFilterDefault = document.querySelector('#storeFilter').innerHTML
 
-function setFilterBaselines() {
+function setBaselines() {
+  allYears = []
+  allSestieres = []
+  allStores = []
+  sestiereOptions = []
+  storesOptions = []
+
   for (let i = 0; i < data.length; i++) {
     for (let j = 0; j < data[i].info.length; j++) {
       if (data[i].info[j].year_collected != "" && !allYears.includes(data[i].info[j].year_collected)) {
@@ -46,6 +55,23 @@ function setFilterBaselines() {
         allStores.push(data[i].info[j].store_type)
       }
     }
+  }
+
+  let sestiereNames = allSestieres.sort()
+  for (let i = 0; i < sestiereNames.length; i++){
+    const sesOpt = document.createElement('option')
+    sesOpt.value = sesOpt.text = sestiereNames[i]
+    sestiereOptions.push(sesOpt)
+  }
+
+  let storesNames = allStores.sort()
+  const firstOpt = document.createElement('option')
+  firstOpt.value = firstOpt.text = ""
+  storesOptions.push(firstOpt)
+  for (let i = 0; i < storesNames.length; i++){
+    const stoOpt = document.createElement('option')
+    stoOpt.value = stoOpt.text = storesNames[i]
+    storesOptions.push(stoOpt)
   }
 }
 
@@ -219,9 +245,12 @@ function setContent(pointInfo) {
     storeLabel.setAttribute("for", "storeInput")
     storeLabel.innerText = "Store Type:"
     content.appendChild(storeLabel)
-    const storeInput = document.createElement("input")
+    const storeInput = document.createElement("select")
     storeInput.setAttribute("id", "storeInput")
     storeInput.setAttribute("name", "storeInput")
+    for (let i = 0; i < storesOptions.length; i++){
+      storeInput.add(storesOptions[i])
+    }
     storeInput.value = currInfo.store_type
     content.appendChild(storeInput)
     const clearStore = document.createElement("button")
@@ -314,7 +343,7 @@ function setContent(pointInfo) {
                   return data
                 })
                 .then(function (data) {
-                  setFilterBaselines()
+                  setBaselines()
                   setFeatures()
                   setPopup()
                   addLayer()
@@ -394,9 +423,12 @@ function setContent(pointInfo) {
     storeLabel.setAttribute("for", "storeInput")
     storeLabel.innerText = "Store Type:"
     content.appendChild(storeLabel)
-    const storeInput = document.createElement("input")
+    const storeInput = document.createElement("select")
     storeInput.setAttribute("id", "storeInput")
     storeInput.setAttribute("name", "storeInput")
+    for (let i = 0; i < storesOptions.length; i++){
+      storeInput.add(storesOptions[i])
+    }
     storeInput.value = currInfo.store_type
     content.appendChild(storeInput)
     const clearStore = document.createElement("button")
@@ -487,7 +519,7 @@ function setContent(pointInfo) {
                   return data
                 })
                 .then(function (data) {
-                  setFilterBaselines()
+                  setBaselines()
                   setFeatures()
                   setPopup()
                   addLayer()
@@ -545,7 +577,7 @@ function setContent(pointInfo) {
               return data
             })
             .then(function (data) {
-              setFilterBaselines()
+              setBaselines()
               setFeatures()
               setPopup()
               addLayer()
@@ -634,14 +666,13 @@ function setAddLocation() {
     sestiereLabel.setAttribute("for", "sestiereInput")
     sestiereLabel.innerText = "Sestiere: "
     content.appendChild(sestiereLabel)
-    const sestiereInput = document.createElement("input")
+    const sestiereInput = document.createElement("select")
     sestiereInput.setAttribute("id", "sestiereInput")
     sestiereInput.setAttribute("name", "sestiereInput")
+    for (let i = 0; i < sestiereOptions.length; i++){
+      sestiereInput.add(sestiereOptions[i])
+    }
     content.appendChild(sestiereInput)
-    const clearSestiere = document.createElement("button")
-    clearSestiere.innerText = "Clear"
-    clearSestiere.onclick = function () { sestiereInput.value = "" }
-    content.appendChild(clearSestiere)
     content.appendChild(document.createElement("br"))
 
     const numberLabel = document.createElement("label")
@@ -766,9 +797,12 @@ function setAddLocation() {
     storeLabel.setAttribute("for", "storeInput")
     storeLabel.innerText = "Store Type:"
     content.appendChild(storeLabel)
-    const storeInput = document.createElement("input")
+    const storeInput = document.createElement("select")
     storeInput.setAttribute("id", "storeInput")
     storeInput.setAttribute("name", "storeInput")
+    for (let i = 0; i < storesOptions.length; i++){
+      storeInput.add(storesOptions[i])
+    }
     content.appendChild(storeInput)
     const clearStore = document.createElement("button")
     clearStore.innerText = "Clear"
@@ -798,7 +832,6 @@ function setAddLocation() {
     flagBox.setAttribute("type", "checkbox")
     flagBox.setAttribute("id", "flagbox")
     flagBox.setAttribute("name", "flagBox")
-    flagBox.checked = currInfo.flagged
     content.appendChild(flagBox)
     content.appendChild(document.createElement("br"))
 
@@ -814,7 +847,10 @@ function setAddLocation() {
     submitButton.innerText = "submit"
     submitButton.classList.add("scrollButton")
     submitButton.onclick = function () {
-      if (isNaN(latInput.value)) {
+      if (numberInput.value = "") {
+        alert("Address Number cannot be left blank")
+      }
+      else if (isNaN(latInput.value)) {
         alert("Latitude must be a number")
       }
       else if (isNaN(lngInput.value)) {
@@ -865,7 +901,7 @@ function setAddLocation() {
                   return data
                 })
                 .then(function (data) {
-                  setFilterBaselines()
+                  setBaselines()
                   setFeatures()
                   setPopup()
                   addLayer()
@@ -1038,7 +1074,7 @@ window.onload = function () {
         return data
       })
       .then(function (data) {
-        setFilterBaselines()
+        setBaselines()
         setFeatures()
         setPopup()
         addLayer()
