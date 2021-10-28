@@ -338,7 +338,24 @@ function setContent(pointInfo) {
                   return response.json()
                 })
                 .then(function (json) {
-                  data = json
+                  const nonDeleted = []
+                  for (let i = 0; i < json.length; i++){
+                    let len = json[i].info.length
+                    const newInfo = []
+                    for (let j = 0; j < json[i].info.length; j++){
+                      if (json[i].info[j].deleted){ len = len-1 }
+                      else{  newInfo.push(json[i].info[j])  }
+                    }
+                    if (len === json[i].info.length){
+                      nonDeleted.push(json[i])
+                    }
+                    else if (len > 0){
+                      let newInsert = json[i]
+                      newInsert.info = newInfo
+                      nonDeleted.push(newInsert)
+                    }
+                  }
+                  data = nonDeleted
                   dataAll = JSON.parse(JSON.stringify(data))
                   return data
                 })
@@ -514,7 +531,24 @@ function setContent(pointInfo) {
                   return response.json()
                 })
                 .then(function (json) {
-                  data = json
+                  const nonDeleted = []
+                  for (let i = 0; i < json.length; i++){
+                    let len = json[i].info.length
+                    const newInfo = []
+                    for (let j = 0; j < json[i].info.length; j++){
+                      if (json[i].info[j].deleted){ len = len-1 }
+                      else{  newInfo.push(json[i].info[j])  }
+                    }
+                    if (len === json[i].info.length){
+                      nonDeleted.push(json[i])
+                    }
+                    else if (len > 0){
+                      let newInsert = json[i]
+                      newInsert.info = newInfo
+                      nonDeleted.push(newInsert)
+                    }
+                  }
+                  data = nonDeleted
                   dataAll = JSON.parse(JSON.stringify(data))
                   return data
                 })
@@ -572,7 +606,24 @@ function setContent(pointInfo) {
               return response.json()
             })
             .then(function (json) {
-              data = json
+              const nonDeleted = []
+              for (let i = 0; i < json.length; i++){
+                let len = json[i].info.length
+                const newInfo = []
+                for (let j = 0; j < json[i].info.length; j++){
+                  if (json[i].info[j].deleted){ len = len-1 }
+                  else{  newInfo.push(json[i].info[j])  }
+                }
+                if (len === json[i].info.length){
+                  nonDeleted.push(json[i])
+                }
+                else if (len > 0){
+                  let newInsert = json[i]
+                  newInsert.info = newInfo
+                  nonDeleted.push(newInsert)
+                }
+              }
+              data = nonDeleted
               dataAll = JSON.parse(JSON.stringify(data))
               return data
             })
@@ -610,7 +661,7 @@ function setContent(pointInfo) {
   if (currInfo.flagged){
     displayedInfo.innerHTML = displayedInfo.innerHTML + "<h1>Flagged</h1>"
   }
-
+  displayedInfo.innerHTML = displayedInfo.innerHTML + "<h1>" + currInfo.year_collected + "</h1>"
   content.appendChild(displayedInfo)
 
   const pastButton = document.createElement("button");
@@ -623,10 +674,6 @@ function setContent(pointInfo) {
     setContent(pointInfo)
   }
   content.appendChild(pastButton)
-
-  const yearCollected = document.createElement("h1")
-  yearCollected.innerText = currInfo.year_collected
-  content.appendChild(yearCollected)
 
   const futureButton = document.createElement("button");
   futureButton.innerText = "Next Year";
@@ -896,7 +943,24 @@ function setAddLocation() {
                   return response.json()
                 })
                 .then(function (json) {
-                  data = json
+                  const nonDeleted = []
+                  for (let i = 0; i < json.length; i++){
+                    let len = json[i].info.length
+                    const newInfo = []
+                    for (let j = 0; j < json[i].info.length; j++){
+                      if (json[i].info[j].deleted){ len = len-1 }
+                      else{  newInfo.push(json[i].info[j])  }
+                    }
+                    if (len === json[i].info.length){
+                      nonDeleted.push(json[i])
+                    }
+                    else if (len > 0){
+                      let newInsert = json[i]
+                      newInsert.info = newInfo
+                      nonDeleted.push(newInsert)
+                    }
+                  }
+                  data = nonDeleted
                   dataAll = JSON.parse(JSON.stringify(data))
                   return data
                 })
@@ -1069,7 +1133,24 @@ window.onload = function () {
         return response.json()
       })
       .then(function (json) {
-        data = json
+        const nonDeleted = []
+        for (let i = 0; i < json.length; i++){
+          let len = json[i].info.length
+          const newInfo = []
+          for (let j = 0; j < json[i].info.length; j++){
+            if (json[i].info[j].deleted){ len = len-1 }
+            else{  newInfo.push(json[i].info[j])  }
+          }
+          if (len === json[i].info.length){
+            nonDeleted.push(json[i])
+          }
+          else if (len > 0){
+            let newInsert = json[i]
+            newInsert.info = newInfo
+            nonDeleted.push(newInsert)
+          }
+        }
+        data = nonDeleted
         dataAll = JSON.parse(JSON.stringify(data))
         return data
       })

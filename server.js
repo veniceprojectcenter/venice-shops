@@ -110,22 +110,15 @@ app.post("/edit", function(request, response) {
 })
 
 app.post("/delete", function(request, response) {
-  if (request.body.info.length === 1){
-    collection.deleteOne({ _id: mongodb.ObjectId(request.body._id) })
-    .then(collection.find({}).toArray())
-    .then(result => response.json(result));
-  }
-  else{
-    const newInfo = request.body.info
-    newInfo.splice(request.body.index, 1)
-    collection.updateOne(
-      { _id: mongodb.ObjectId(request.body._id) },
-      { $set: { info: newInfo }}
-    )
-    .then(collection.find({}).toArray())
-    .then(result => response.json(result));
-  }
+  const newInfo = request.body.info
+  newInfo[request.body.index].deleted = true
+  collection.updateOne(
+    { _id: mongodb.ObjectId(request.body._id) },
+    { $set: { info: newInfo }}
+  )
+  .then(collection.find({}).toArray())
+  .then(result => response.json(result));
 })
 
-app.listen(port);
+app.listen(process.env.PORT || port);
 
