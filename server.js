@@ -5,6 +5,9 @@ const express = require("express"),
   bodyparser = require("body-parser"),
   favicon = require("serve-favicon"),
   mongodb = require("mongodb"),
+  {google} = require('googleapis'),
+  KEYFILEPATH = __dirname + '/public/googleKey.json',
+  SCOPES = ['https://www.googleapis.com/auth/drive'],
   port = 3003;
 
 const uri = "mongodb+srv://mapuser:mapuser@cluster0.0k894.mongodb.net/"
@@ -15,6 +18,13 @@ let collection = null;
 client.connect(err => {
   collection = client.db("VeniceShops").collection("MapsFeatures")
 })
+
+const auth = new google.auth.GoogleAuth({
+  keyfile: KEYFILEPATH,
+  scopes: SCOPES
+})
+
+process.env.GOOGLE_APPLICATION_CREDENTIALS = KEYFILEPATH
 
 app.use(express.static("public"));
 app.use(favicon(__dirname + "/public/assets/gondola.ico"));
@@ -118,6 +128,27 @@ app.post("/delete", function(request, response) {
   )
   .then(collection.find({}).toArray())
   .then(result => response.json(result));
+})
+
+app.post("/upload", function(request, response) {
+  const driveService = google.drive({version: "v3", auth})
+  
+  let fileMetaData = {
+    name: request.body.imgName,
+    parents: ['1UURF6BTn3C6SWS8Yct7XlsHlsIu1lyc6']
+  }
+
+  let media = {
+    mimeType: 'image/png, image/jpeg',
+    body: request.body.imgsrc
+  }
+
+  driveService.files.create({
+    resource: fileMetaData,
+    media: media,
+    fields: 'webContentLink'
+  })
+  .then(result => response.json(result))
 })
 
 app.listen(process.env.PORT || port);

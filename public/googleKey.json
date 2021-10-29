@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "my-project-1543348070457",
+  "private_key_id": "29aeddea782c9aaedada6c17a75c3cc0bd0a2b05",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDySZB98fJIRCTQ\ntxbK12losZJP5NRv8UY2l8akUycp58nbbyeRZ7YGLgz/N7itLW6DuU7xRciGrVez\narvpUwyGGv7ux0pLrOf0aWEnHYom2HHbIFLgj+RWJjKEXPd6WovSaqL0G9NcWeVW\nRCLcJUWFAj+RzniuRGyA50KcGznUbG5VkrBCeUHXSukFRegXB79dyZ21saYzzARv\nmkkL8Mkhu0eu/g3TvHs+zGivCkrLHZuqqFbdqJODFOjC/VEOCmjAT1M97Dl/JZ0c\nR+cIBiHqi0MJ/WVSFgMUrOkxFUUO1T/iuamvYyvXj1iYb6WR+apkMla5fnchokke\n8K4jta8VAgMBAAECggEABi6Sqrv+eBHmXz2aAxvtmxe+HslnvYwfmVX/DK34d60W\ngpb6oKRPnycT+tETpmDciyzdEvKPtBapKwaZUSc8Jbx7mQu/CAubMX/HfvrVzbmZ\nEhkS3vBHnbEaJIlwtmT9YKWK5IVEkScpXwLxtsHsB6xFLfW2249wYKDwm1C7MCx1\nYLI+IENm3v1wbNBeAIvsYW7wBZSjoQuNZ9eIZ8E4Il1Zkd80clWiegWGvTzCR1+U\nl02eU4wafB9WO4Q/sUVLXGWHCdxzPnHp9PCGNlioVUWOHeZ0hay5xeeIvfDxyoEN\nX4u/TRBBC8EtiJrZx6FQM/Kl3Mpqo1/5q7bK9NlqEQKBgQD5jlmpxDYph3Oh2M1o\n0lUlSvFtGQUuCUV0euZeN5n9O+XANiFWb6P+urxu/4x9mHp3DdH636wmnKto7Aqs\n4otf3DGMXQi5lzjMLXBJUHMQqKR8e9Pth5Y5VJKQvIU73Adrj34E8tgKwdCNrHyK\n8EzWfvaDSFYHYl6aBax9UPRTSQKBgQD4iypoEJC+luFlMUyp5JdPo/SE8F3ML9su\nJPz06koBKXQRobjRYrSR5lLC42QNu4aLljJZd1mUImBCZP9D3sw5svbmlg11AFHM\nFPc7gEayWXg7k93TUmJGONkAr0wGuzW/neY264J2bxfF7abAvgjP7RB6Zrr1iGnf\nx4TzAJNxbQKBgFIkrRbYYwugbktj1ZkfQq+Xz4gdqDrTCm2g1ptEqgdU4/c02hxd\nexmp1cSjkVb2DbmKbwepAD1lbHaI26q0lzPigty08t5EDIoImuFG/dkJ6bqf985D\nxwrv7558r05Yyoh5Hv36AWrpCQDZOdVx65jfCb2E3exoUMNaAsDtGL8hAoGBAK/C\nch2fQUyWFBRkVYt7DImULxFnjV0cpomuPHfRyr2hm+PwEmt3uqvGTdZlyVZwu0ew\n0jA0V1OLL7kkBOPxBUj0RudvS1rm+/EvDlq0bsomvQCco2ySQM7Z2pNCY6gK8Yps\n1eUWjG7GRvCAC8EXYdHwGgwE48dITV6jkF/rk1jNAoGBAPNS0kAEIo87hCN/+wbY\nCXIiHEFIpLIjIe66K3bZcHbgMJua8E8TJpJDFGSnuOfoI5iBlBTeJQq/939zEaMG\ntUOPwOAe6lWBd2+/bM68ApAUB3DH/8ivpBqpyGGh9gJgYXaXleKuY0nsvTQswaG6\nrwW3kSIJ4ggNePZC3Ng/+dC8\n-----END PRIVATE KEY-----\n",
+  "client_email": "picturestorage@my-project-1543348070457.iam.gserviceaccount.com",
+  "client_id": "102072059386424335154",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/picturestorage%40my-project-1543348070457.iam.gserviceaccount.com"
+}

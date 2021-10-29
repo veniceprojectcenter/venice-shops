@@ -498,83 +498,97 @@ function setContent(pointInfo) {
       }
       else {
         loadingPopup()
-        const addedJSON = {
-          _id: pointInfo._id,
-          parent_id: pointInfo.parent_id,
-          address: pointInfo.address,
-          address_street: pointInfo.address_street,
-          info: information,
-          name: nameInput.value,
-          note: noteInput.value,
-          flagged: flagBox.checked,
-          image: imagePreview.src,
-          year: parseInt(yearInput.value, 10),
-          store: storeInput.value,
-          group: "Undefined",
-          nace: "Undefined"
+        const imgUpload = {
+          imgName: yearInput.value + pointInfo.address,
+          parents: "",
+          imgsrc: imageInput.value
         }
-
-        fetch("/add", {
+        fetch("/upload", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(addedJSON)
+          body: JSON.stringify(imgUpload)
         })
-          .then(function () {
-            const savedId = pointInfo._id
-            let savedInfo;
-            const editing = new Promise((request, response) => {
-              map.removeLayer(layer)
-              fetch("/load", {
-                method: "GET"
-              })
-                .then(function (response) {
-                  return response.json()
-                })
-                .then(function (json) {
-                  const nonDeleted = []
-                  for (let i = 0; i < json.length; i++){
-                    let len = json[i].info.length
-                    const newInfo = []
-                    for (let j = 0; j < json[i].info.length; j++){
-                      if (json[i].info[j].deleted){ len = len-1 }
-                      else{  newInfo.push(json[i].info[j])  }
-                    }
-                    if (len === json[i].info.length){
-                      nonDeleted.push(json[i])
-                    }
-                    else if (len > 0){
-                      let newInsert = json[i]
-                      newInsert.info = newInfo
-                      nonDeleted.push(newInsert)
-                    }
-                  }
-                  data = nonDeleted
-                  dataAll = JSON.parse(JSON.stringify(data))
-                  return data
-                })
-                .then(function (data) {
-                  setBaselines()
-                  setFeatures()
-                  setPopup()
-                  addLayer()
-                  setFlagFilter()
-                  setYearFilter()
-                  setSestiereFilter()
-                  setStoreFilter()
-                  return 0
-                })
-                .then(function () {
-                  for (let i = 0; i < newfeatures.length; i++) {
-                    if (newfeatures[i].A._id === savedId)
-                      savedInfo = newfeatures[i].A
-                  }
-                  popupIndex = savedInfo.info.length - 1
-                  setContent(savedInfo)
-                  return 0
-                })
-            })
-            return 0
+        .then(function (response) {
+          return response.json()
+        })
+        .then(function (response) {
+          const addedJSON = {
+            _id: pointInfo._id,
+            parent_id: pointInfo.parent_id,
+            address: pointInfo.address,
+            address_street: pointInfo.address_street,
+            info: information,
+            name: nameInput.value,
+            note: noteInput.value,
+            flagged: flagBox.checked,
+            image: response.data.webContentLink,
+            year: parseInt(yearInput.value, 10),
+            store: storeInput.value,
+            group: "Undefined",
+            nace: "Undefined"
+          }
+          fetch("/add", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(addedJSON)
           })
+            .then(function () {
+              const savedId = pointInfo._id
+              let savedInfo;
+              const editing = new Promise((request, response) => {
+                map.removeLayer(layer)
+                fetch("/load", {
+                  method: "GET"
+                })
+                  .then(function (response) {
+                    return response.json()
+                  })
+                  .then(function (json) {
+                    const nonDeleted = []
+                    for (let i = 0; i < json.length; i++){
+                      let len = json[i].info.length
+                      const newInfo = []
+                      for (let j = 0; j < json[i].info.length; j++){
+                        if (json[i].info[j].deleted){ len = len-1 }
+                        else{  newInfo.push(json[i].info[j])  }
+                      }
+                      if (len === json[i].info.length){
+                        nonDeleted.push(json[i])
+                      }
+                      else if (len > 0){
+                        let newInsert = json[i]
+                        newInsert.info = newInfo
+                        nonDeleted.push(newInsert)
+                      }
+                    }
+                    data = nonDeleted
+                    dataAll = JSON.parse(JSON.stringify(data))
+                    return data
+                  })
+                  .then(function (data) {
+                    setBaselines()
+                    setFeatures()
+                    setPopup()
+                    addLayer()
+                    setFlagFilter()
+                    setYearFilter()
+                    setSestiereFilter()
+                    setStoreFilter()
+                    return 0
+                  })
+                  .then(function () {
+                    for (let i = 0; i < newfeatures.length; i++) {
+                      if (newfeatures[i].A._id === savedId)
+                        savedInfo = newfeatures[i].A
+                    }
+                    popupIndex = savedInfo.info.length - 1
+                    setContent(savedInfo)
+                    return 0
+                  })
+              })
+              return 0
+            })
+        })
       }
     }
     content.appendChild(submitButton)
