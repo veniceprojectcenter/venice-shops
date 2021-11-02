@@ -1,7 +1,7 @@
-const { json } = require("express");
-
 const express = require("express"),
   app = express(),
+  fileUpload = require('express-fileupload'),
+  fs = require('fs'),
   bodyparser = require("body-parser"),
   favicon = require("serve-favicon"),
   mongodb = require("mongodb"),
@@ -29,6 +29,7 @@ process.env.GOOGLE_APPLICATION_CREDENTIALS = KEYFILEPATH
 app.use(express.static("public"));
 app.use(favicon(__dirname + "/public/assets/gondola.ico"));
 app.use(bodyparser.json());
+app.use(fileUpload());
 
 app.get("/", function(request, response) {
   response.sendFile("/index.html");
@@ -130,7 +131,28 @@ app.post("/delete", function(request, response) {
   .then(result => response.json(result));
 })
 
+app.post("/upload2", (req, res) => {
+  const fileName = req.files.myFile.name
+  const path = __dirname + '/images/' + fileName
+
+  req.files.myFile.mv(path, (error) => {
+    if (error) {
+      console.error(error)
+      res.writeHead(500, {
+        'Content-Type': 'application/json'
+      })
+      res.end(JSON.stringify({ status: 'error', message: error}))
+      return
+    }
+    res.writeHead(200, {
+      'Content-Type': 'application/json'
+    })
+    res.end(JSON.stringify({status: 'success', path: path}))
+  })
+})
+
 app.post("/upload", function(request, response) {
+
   const driveService = google.drive({version: "v3", auth})
   
   let fileMetaData = {
@@ -140,7 +162,7 @@ app.post("/upload", function(request, response) {
 
   let media = {
     mimeType: 'image/png, image/jpeg',
-    body: request.body.imgsrc
+    body: fs.createReadStream(request.body.imgsrc)
   }
 
   driveService.files.create({
