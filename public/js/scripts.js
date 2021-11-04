@@ -90,6 +90,8 @@ function setFeatures() {
       newfeatures.push(next)
     }
   }
+  const numDisplay = document.querySelector('#numberDisplay')
+  numDisplay.innerText = newfeatures.length
 }
 
 function removePopup() {
@@ -636,7 +638,6 @@ function setContent(pointInfo) {
   deleteButton.innerHTML = '<img src="./assets/trash.png"/>'
   deleteButton.onclick = function () {
     loadingPopup()
-    console.log(popupIndex)
     addedJSON = {
       _id: pointInfo._id,
       info: information,
@@ -1237,7 +1238,6 @@ window.onload = function () {
             nonDeleted.push(newInsert)
           }
         }
-        console.log(nonDeleted)
         data = nonDeleted
         dataAll = JSON.parse(JSON.stringify(data))
         return data
