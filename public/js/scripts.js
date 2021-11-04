@@ -78,7 +78,7 @@ function setBaselines() {
 function setFeatures() {
   newfeatures = []
   for (let i = 0; i < data.length; i++) {
-    if (data[i].info.length !== 0) {
+    if (data[i].info2.length !== 0) {
       let next = new ol.Feature({
         geometry: new ol.geom.Point(ol.proj.fromLonLat([data[i].lng, data[i].lat])),
         _id: data[i]._id,
@@ -328,7 +328,6 @@ function setContent(pointInfo) {
               .then(function (response) {
                 const addedJSON = {
                   _id: pointInfo._id,
-                  index: popupIndex,
                   parent_id: pointInfo.parent_id,
                   address: pointInfo.address,
                   address_street: pointInfo.address_street,
@@ -369,11 +368,14 @@ function setContent(pointInfo) {
                               else { newInfo.push(json[i].info[j]) }
                             }
                             if (len === json[i].info.length) {
-                              nonDeleted.push(json[i])
+                              const newInsert = json[i]
+                              newInsert.info2 = newInfo
+                              nonDeleted.push(newInsert)
                             }
                             else if (len > 0) {
                               let newInsert = json[i]
                               newInsert.info = newInfo
+                              newInsert.info2 = newInfo
                               nonDeleted.push(newInsert)
                             }
                           }
@@ -584,11 +586,14 @@ function setContent(pointInfo) {
                             else { newInfo.push(json[i].info[j]) }
                           }
                           if (len === json[i].info.length) {
-                            nonDeleted.push(json[i])
+                            const newInsert = json[i]
+                            newInsert.info2 = newInfo
+                            nonDeleted.push(newInsert)
                           }
                           else if (len > 0) {
                             let newInsert = json[i]
                             newInsert.info = newInfo
+                            newInsert.info2 = newInfo
                             nonDeleted.push(newInsert)
                           }
                         }
@@ -635,7 +640,7 @@ function setContent(pointInfo) {
     addedJSON = {
       _id: pointInfo._id,
       info: information,
-      index: popupIndex
+      year: pointInfo.year_collected
     }
     fetch("/delete", {
       method: "POST",
@@ -661,11 +666,14 @@ function setContent(pointInfo) {
                   else { newInfo.push(json[i].info[j]) }
                 }
                 if (len === json[i].info.length) {
-                  nonDeleted.push(json[i])
+                  const newInsert = json[i]
+                  newInsert.info2 = newInfo
+                  nonDeleted.push(newInsert)
                 }
                 else if (len > 0) {
                   let newInsert = json[i]
                   newInsert.info = newInfo
+                  newInsert.info2 = newInfo
                   nonDeleted.push(newInsert)
                 }
               }
@@ -1020,11 +1028,14 @@ function setAddLocation() {
                               else { newInfo.push(json[i].info[j]) }
                             }
                             if (len === json[i].info.length) {
-                              nonDeleted.push(json[i])
+                              const newInsert = json[i]
+                              newInsert.info2 = newInfo
+                              nonDeleted.push(newInsert)
                             }
                             else if (len > 0) {
                               let newInsert = json[i]
                               newInsert.info = newInfo
+                              newInsert.info2 = newInfo
                               nonDeleted.push(newInsert)
                             }
                           }
@@ -1168,22 +1179,24 @@ function filterFeatures(e) {
 
   if (flagTarget) {
     for (let i = 0; i < data.length; i++) {
-      data[i].info = data[i].info.filter(item => item.flagged)
+      data[i].info2 = data[i].info.filter(item => item.flagged)
     }
   }
   if (yearTargets.length !== 0) {
     for (let i = 0; i < data.length; i++) {
-      data[i].info = data[i].info.filter(item => yearTargets.includes(String(item.year_collected)))
+      data[i].info2 = data[i].info.filter(item => yearTargets.includes(String(item.year_collected)))
     }
   }
   if (sestiereTargets.length !== 0) {
     for (let i = 0; i < data.length; i++) {
-      if (!sestiereTargets.includes(data[i].address_sestiere)) { data[i].info = [] }
+      if (!sestiereTargets.includes(data[i].address_sestiere)) {
+        data[i].info2 = [] 
+      }
     }
   }
   if (storeTargets.length !== 0) {
     for (let i = 0; i < data.length; i++) {
-      data[i].info = data[i].info.filter(item => storeTargets.includes(item.store_type))
+      data[i].info2 = data[i].info.filter(item => storeTargets.includes(item.store_type))
     }
   }
 
@@ -1213,14 +1226,18 @@ window.onload = function () {
             else { newInfo.push(json[i].info[j]) }
           }
           if (len === json[i].info.length) {
-            nonDeleted.push(json[i])
+            const newInsert = json[i]
+            newInsert.info2 = newInfo
+            nonDeleted.push(newInsert)
           }
           else if (len > 0) {
-            let newInsert = json[i]
+            const newInsert = json[i]
             newInsert.info = newInfo
+            newInsert.info2 = newInfo
             nonDeleted.push(newInsert)
           }
         }
+        console.log(nonDeleted)
         data = nonDeleted
         dataAll = JSON.parse(JSON.stringify(data))
         return data

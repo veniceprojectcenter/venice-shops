@@ -111,7 +111,11 @@ app.post("/edit", function(request, response) {
     note: request.body.note,
     flagged: request.body.flagged
   };
-  newInfo[request.body.index] = jsonNew;
+  for (let i = 0; i < newInfo.length; i++){
+    if (newInfo[i].year_collected === jsonNew.year_collected){
+      newInfo[i] = jsonNew
+    }
+  }
   collection.updateOne(
     { _id: mongodb.ObjectId(request.body._id) },
     { $set: { info: newInfo }}
@@ -122,7 +126,11 @@ app.post("/edit", function(request, response) {
 
 app.post("/delete", function(request, response) {
   const newInfo = request.body.info
-  newInfo[request.body.index].deleted = true
+  for (let i = 0; i < newInfo.length; i++){
+    if (newInfo[i].year_collected === request.body.year){
+      newInfo[i].deleted = true
+    }
+  }
   collection.updateOne(
     { _id: mongodb.ObjectId(request.body._id) },
     { $set: { info: newInfo }}
