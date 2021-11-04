@@ -165,12 +165,23 @@ app.post("/upload", function(request, response) {
     body: fs.createReadStream(request.body.imgsrc)
   }
 
+  let result;
+
   driveService.files.create({
     resource: fileMetaData,
     media: media,
     fields: 'webContentLink'
   })
-  .then(result => response.json(result))
+  .then(function (resultlink) {
+    result = resultlink
+    return 0;
+  })
+  .then(function () {
+    fs.unlinkSync(request.body.imgsrc)
+  })
+  .then(function () {
+    response.json(result)
+  })
 })
 
 app.listen(process.env.PORT || port);

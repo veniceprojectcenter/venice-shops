@@ -564,7 +564,7 @@ function setContent(pointInfo) {
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify(addedJSON)
                 })
-                  .then(function () {
+                  .then(function (response) {
                     const savedId = pointInfo._id
                     let savedInfo;
                     map.removeLayer(layer)
