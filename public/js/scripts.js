@@ -298,117 +298,197 @@ function setContent(pointInfo) {
     submitButton.innerText = "submit"
     submitButton.classList.add("scrollButton")
     submitButton.onclick = function () {
-      if (imagePreview.src === "") {
-        alert("Every data point must include a picture")
-      }
-      else if (isNaN(yearInput.value)) {
+      if (isNaN(yearInput.value)) {
         alert("Year Collected must be a number")
       }
       else {
         loadingPopup()
-        const formData = new FormData()
-        formData.append('myFile', imageInput.files[0])
-        fetch("/upload2", {
-          method: "POST",
-          body: formData
-        })
-          .then(response => response.json())
-          .then(data => {
-            const imgUpload = {
-              imgName: yearInput.value + pointInfo.address,
-              parents: "",
-              imgsrc: data.path
-            }
-            fetch("/upload", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(imgUpload)
-            })
-              .then(function (response) {
-                return response.json()
+        if (imageInput.files.length !== 0){
+          const formData = new FormData()
+          formData.append('myFile', imageInput.files[0])
+          fetch("/upload2", {
+            method: "POST",
+            body: formData
+          })
+            .then(response => response.json())
+            .then(data => {
+              const imgUpload = {
+                imgName: yearInput.value + pointInfo.address,
+                parents: "",
+                imgsrc: data.path
+              }
+              fetch("/upload", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(imgUpload)
               })
-              .then(function (response) {
-                const addedJSON = {
-                  _id: pointInfo._id,
-                  parent_id: pointInfo.parent_id,
-                  address: pointInfo.address,
-                  address_street: pointInfo.address_street,
-                  info: information,
-                  name: nameInput.value,
-                  note: noteInput.value,
-                  flagged: flagBox.checked,
-                  image: response.data.webContentLink,
-                  year: parseInt(yearInput.value, 10),
-                  store: storeInput.value,
-                  group: "Undefined",
-                  nace: "Undefined"
-                }
-
-                fetch("/edit", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify(addedJSON)
+                .then(function (response) {
+                  return response.json()
                 })
-                  .then(function () {
-                    const savedId = pointInfo._id
-                    let savedInfo;
-                    const editing = new Promise((request, response) => {
-                      map.removeLayer(layer)
-                      fetch("/load", {
-                        method: "GET"
+                .then(function (response) {
+                  const addedJSON = {
+                    _id: pointInfo._id,
+                    parent_id: pointInfo.parent_id,
+                    address: pointInfo.address,
+                    address_street: pointInfo.address_street,
+                    info: information,
+                    name: nameInput.value,
+                    note: noteInput.value,
+                    flagged: flagBox.checked,
+                    image: response.data.webContentLink,
+                    year: parseInt(yearInput.value, 10),
+                    store: storeInput.value,
+                    group: "Undefined",
+                    nace: "Undefined"
+                  }
+
+                  fetch("/edit", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(addedJSON)
+                  })
+                    .then(function () {
+                      const savedId = pointInfo._id
+                      let savedInfo;
+                      const editing = new Promise((request, response) => {
+                        map.removeLayer(layer)
+                        fetch("/load", {
+                          method: "GET"
+                        })
+                          .then(function (response) {
+                            return response.json()
+                          })
+                          .then(function (json) {
+                            const nonDeleted = []
+                            for (let i = 0; i < json.length; i++) {
+                              let len = json[i].info.length
+                              const newInfo = []
+                              for (let j = 0; j < json[i].info.length; j++) {
+                                if (json[i].info[j].deleted) { len = len - 1 }
+                                else { newInfo.push(json[i].info[j]) }
+                              }
+                              if (len === json[i].info.length) {
+                                const newInsert = json[i]
+                                newInsert.info2 = newInfo
+                                nonDeleted.push(newInsert)
+                              }
+                              else if (len > 0) {
+                                let newInsert = json[i]
+                                newInsert.info = newInfo
+                                newInsert.info2 = newInfo
+                                nonDeleted.push(newInsert)
+                              }
+                            }
+                            data = nonDeleted
+                            dataAll = JSON.parse(JSON.stringify(data))
+                            return data
+                          })
+                          .then(function (data) {
+                            setBaselines()
+                            setFeatures()
+                            setPopup()
+                            addLayer()
+                            setFlagFilter()
+                            setYearFilter()
+                            setSestiereFilter()
+                            setStoreFilter()
+                            return 0
+                          })
+                          .then(function () {
+                            for (let i = 0; i < newfeatures.length; i++) {
+                              if (newfeatures[i].A._id === savedId)
+                                savedInfo = newfeatures[i].A
+                            }
+                            setContent(savedInfo)
+                            return 0
+                          })
                       })
-                        .then(function (response) {
-                          return response.json()
-                        })
-                        .then(function (json) {
-                          const nonDeleted = []
-                          for (let i = 0; i < json.length; i++) {
-                            let len = json[i].info.length
-                            const newInfo = []
-                            for (let j = 0; j < json[i].info.length; j++) {
-                              if (json[i].info[j].deleted) { len = len - 1 }
-                              else { newInfo.push(json[i].info[j]) }
-                            }
-                            if (len === json[i].info.length) {
-                              const newInsert = json[i]
-                              newInsert.info2 = newInfo
-                              nonDeleted.push(newInsert)
-                            }
-                            else if (len > 0) {
-                              let newInsert = json[i]
-                              newInsert.info = newInfo
-                              newInsert.info2 = newInfo
-                              nonDeleted.push(newInsert)
-                            }
-                          }
-                          data = nonDeleted
-                          dataAll = JSON.parse(JSON.stringify(data))
-                          return data
-                        })
-                        .then(function (data) {
-                          setBaselines()
-                          setFeatures()
-                          setPopup()
-                          addLayer()
-                          setFlagFilter()
-                          setYearFilter()
-                          setSestiereFilter()
-                          setStoreFilter()
-                          return 0
-                        })
-                        .then(function () {
-                          for (let i = 0; i < newfeatures.length; i++) {
-                            if (newfeatures[i].A._id === savedId)
-                              savedInfo = newfeatures[i].A
-                          }
-                          setContent(savedInfo)
-                          return 0
-                        })
+                      return 0
                     })
+                })
+            })
+        }
+        else {
+          const addedJSON = {
+            _id: pointInfo._id,
+            parent_id: pointInfo.parent_id,
+            address: pointInfo.address,
+            address_street: pointInfo.address_street,
+            info: information,
+            name: nameInput.value,
+            note: noteInput.value,
+            flagged: flagBox.checked,
+            image: "",
+            year: parseInt(yearInput.value, 10),
+            store: storeInput.value,
+            group: "Undefined",
+            nace: "Undefined"
+          }
+
+          fetch("/edit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(addedJSON)
+          })
+            .then(function () {
+              const savedId = pointInfo._id
+              let savedInfo;
+              const editing = new Promise((request, response) => {
+                map.removeLayer(layer)
+                fetch("/load", {
+                  method: "GET"
+                })
+                  .then(function (response) {
+                    return response.json()
+                  })
+                  .then(function (json) {
+                    const nonDeleted = []
+                    for (let i = 0; i < json.length; i++) {
+                      let len = json[i].info.length
+                      const newInfo = []
+                      for (let j = 0; j < json[i].info.length; j++) {
+                        if (json[i].info[j].deleted) { len = len - 1 }
+                        else { newInfo.push(json[i].info[j]) }
+                      }
+                      if (len === json[i].info.length) {
+                        const newInsert = json[i]
+                        newInsert.info2 = newInfo
+                        nonDeleted.push(newInsert)
+                      }
+                      else if (len > 0) {
+                        let newInsert = json[i]
+                        newInsert.info = newInfo
+                        newInsert.info2 = newInfo
+                        nonDeleted.push(newInsert)
+                      }
+                    }
+                    data = nonDeleted
+                    dataAll = JSON.parse(JSON.stringify(data))
+                    return data
+                  })
+                  .then(function (data) {
+                    setBaselines()
+                    setFeatures()
+                    setPopup()
+                    addLayer()
+                    setFlagFilter()
+                    setYearFilter()
+                    setSestiereFilter()
+                    setStoreFilter()
+                    return 0
+                  })
+                  .then(function () {
+                    for (let i = 0; i < newfeatures.length; i++) {
+                      if (newfeatures[i].A._id === savedId)
+                        savedInfo = newfeatures[i].A
+                    }
+                    setContent(savedInfo)
                     return 0
                   })
               })
-          })
+              return 0
+            })
+        }
       }
     }
     content.appendChild(submitButton)
@@ -740,6 +820,48 @@ function setContent(pointInfo) {
     setContent(pointInfo)
   }
   content.appendChild(futureButton)
+}
+
+function gotoPosition(position){ 
+  const lat = position.coords.latitude
+  const lng = position.coords.longitude
+
+  if (lng < 12.2915 || lng > 12.379 || lat > 45.453 || lat < 45.425) { 
+    alert("Invalid Coordinates") 
+  }
+  else {
+    map.getView().setCenter(ol.proj.transform([lng, lat], 'EPSG:4326', 'EPSG:3857'));
+    map.getView().setZoom(19)
+  }
+}
+
+function showError(error) {
+  switch(error.code){
+    case error.PERMISSION_DENIED:
+      alert("User denied the request for Geolocation.")
+      break;
+    case error.POSITION_UNAVAILABLE:
+      alert("Location information is unavailable.")
+      break;
+    case error.TIMEOUT:
+      alert("The request to get user location timed out.")
+      break;
+    case error.UNKNOWN_ERROR:
+      alert("An unknown error occurred.")
+      break;
+  }
+}
+
+function setGoToLocation() {
+  const gotoLocation = document.querySelector('#gotoLocation')
+  gotoLocation.onclick = function () {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(gotoPosition,showError);
+    }
+    else{
+      alert('Geolocation not supported')
+    }
+  }
 }
 
 function setAddLocation() {
@@ -1177,15 +1299,15 @@ function filterFeatures(e) {
   }
 
   data = JSON.parse(JSON.stringify(dataAll))
-
+  
   if (flagTarget) {
     for (let i = 0; i < data.length; i++) {
-      data[i].info2 = data[i].info.filter(item => item.flagged)
+      data[i].info2 = data[i].info2.filter(item => item.flagged)
     }
   }
   if (yearTargets.length !== 0) {
     for (let i = 0; i < data.length; i++) {
-      data[i].info2 = data[i].info.filter(item => yearTargets.includes(String(item.year_collected)))
+      data[i].info2 = data[i].info2.filter(item => yearTargets.includes(String(item.year_collected)))
     }
   }
   if (sestiereTargets.length !== 0) {
@@ -1197,7 +1319,7 @@ function filterFeatures(e) {
   }
   if (storeTargets.length !== 0) {
     for (let i = 0; i < data.length; i++) {
-      data[i].info2 = data[i].info.filter(item => storeTargets.includes(item.store_type))
+      data[i].info2 = data[i].info2.filter(item => storeTargets.includes(item.store_type))
     }
   }
 
@@ -1247,6 +1369,7 @@ window.onload = function () {
         setFeatures()
         setPopup()
         addLayer()
+        setGoToLocation()
         setAddLocation()
         setFlagFilter()
         setYearFilter()

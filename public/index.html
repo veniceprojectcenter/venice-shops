@@ -1,46 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <link rel="stylesheet" href="css/style.css" />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css?family=Urbanist"
-    />
-    <link rel="icon" href="favicon.ico?v=1.1" />
 
-    <title>Venice Shops</title>
-    <meta charset="utf-8" />
-    <script src="js/scripts.js" defer></script>
-    <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.8.1/build/ol.js"></script>
-  </head>
+<head>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Urbanist" />
+  <link rel="icon" href="favicon.ico?v=1.1" />
 
-  <body>
-    <div class="bar">
-      <div class="col1">
-        <h2>Items selected:</h2>
-        <h2 id="numberDisplay"></h2>
-      </div>
-      <h1 class="coll2">VENICE SHOPS</h1>
-      <div class="col3">
-        <button id="addLocation">
-          <img src="assets/plus.png" />
-        </button>
-      </div>
+  <title>Venice Shops</title>
+  <meta charset="utf-8" />
+  <script src="js/scripts.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.8.1/build/ol.js"></script>
+</head>
+
+<body>
+  <div class="bar">
+    <div class="col1">
+      <button id="gotoLocation">
+        <img src="assets/gps.png" />
+      </button>
     </div>
+    <h1 class="coll2">VENICE SHOPS</h1>
+    <div class="col3">
+      <button id="addLocation">
+        <img src="assets/plus.png" />
+      </button>
+    </div>
+  </div>
 
+  <div class="grid">
     <div id="map" class="map"></div>
 
     <div id="filter">
+      <div id='collected'>
+        <h2>Items selected:</h2>
+        <h2 id="numberDisplay"></h2>
+      </div>
       <h1>Filters</h1>
       <h3 id="flagFilter"></h3>
       <h3 id="yearFilter">Years Collected</h3>
       <h3 id="sestiereFilter">Sestiere</h3>
       <h3 id="storeFilter">Shop Type</h3>
     </div>
+  </div>
 
-    <div id="popup" class="ol-popup">
-      <a href="#" id="popup-closer" class="ol-popup-closer"></a>
-      <div id="popup-content"></div>
-    </div>
-  </body>
+  <div id="popup" class="ol-popup">
+    <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+    <div id="popup-content"></div>
+  </div>
+</body>
+
 </html>
