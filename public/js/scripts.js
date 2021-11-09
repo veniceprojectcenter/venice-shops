@@ -29,6 +29,7 @@ let allYears = []
 let allSestieres = []
 let allStores = []
 
+let yearOptions = []
 let sestiereOptions = []
 let storesOptions = []
 
@@ -37,24 +38,22 @@ const sestiereFilterDefault = document.querySelector('#sestiereFilter').innerHTM
 const storeFilterDefault = document.querySelector('#storeFilter').innerHTML
 
 function setBaselines() {
-  allYears = []
-  allSestieres = []
-  allStores = []
-  sestiereOptions = []
-  storesOptions = []
-
   for (let i = 0; i < data.length; i++) {
     for (let j = 0; j < data[i].info.length; j++) {
-      if (data[i].info[j].year_collected != "" && !allYears.includes(data[i].info[j].year_collected)) {
+      if (data[i].info[j].year_collected != "" && !allYears.includes(String(data[i].info[j].year_collected))) {
         allYears.push(String(data[i].info[j].year_collected))
       }
       if (data[i].address_sestiere != "" && !allSestieres.includes(data[i].address_sestiere)) {
         allSestieres.push(data[i].address_sestiere)
       }
-      if (data[i].info[j].store_type != "" && !allStores.includes(data[i].info[j].store_type)) {
-        allStores.push(data[i].info[j].store_type)
-      }
     }
+  }
+
+  let yearNames = allYears.sort()
+  for (let i = 0; i < yearNames.length; i++) {
+    const yearOpt = document.createElement('option')
+    yearOpt.value = yearOpt.text = yearNames[i]
+    yearOptions.push(yearOpt)
   }
 
   let sestiereNames = allSestieres.sort()
@@ -64,14 +63,40 @@ function setBaselines() {
     sestiereOptions.push(sesOpt)
   }
 
-  let storesNames = allStores.sort()
-  const firstOpt = document.createElement('option')
-  firstOpt.value = firstOpt.text = ""
-  storesOptions.push(firstOpt)
-  for (let i = 0; i < storesNames.length; i++) {
-    const stoOpt = document.createElement('option')
-    stoOpt.value = stoOpt.text = storesNames[i]
-    storesOptions.push(stoOpt)
+  const shopTypes = {
+    'Clothing Stores': ['Clothing','Costumes',"Children's Clothing", 'Gloves','Mask',"Men's Clothing",'Shoes',
+      'Undergarments',"Women's Clothing"],
+    'Drug Stores': ['Cosmetics','Medical Goods','Pharmacy'],
+    'Entertainment': ['Casino','Entertainment','Movie Theater'],
+    'Food and Beverage Stores': ['Bakery','Butcher','Candy','Coffee','Dairy','Gelateria','Liquor','Produce',
+      'Seafood','Wine'],
+    'Grocery Stores & Supermarkets': ['General Store','Grocery Store'],
+    'Lodging': ['Bed and Breakfast','Guest Houses','Hotel','Hotel with Restaurant','Hostel'],
+    'Restaurants & Bars': ['Bar','Cafe','Fast Food','Pizzeria','Restaurant'],
+    'Services': ['Apartment Rental','Bank','Barber','Car Rental','Computer Services','Delivery','Dry Cleaner',
+      'Electronics Repair','Film Studio','Fitness','Funeral Services','Graphic Design','Hair Salon','Hospital',
+      'Jewelry Repair','Laundromat','Leather Repair','Library','Masseuse','Money Transfer','Nail Salon',
+      'Perfume','Photo Store','Photocopy','Photographer','Post Office','Printing','Real Estate','Repair','Spa',
+      'Study Agency','Swim','Tailor','Tattoo and Piercing','Transportation','Travel Agency','Veterinarian',
+      'Warehouse','Wedding'],
+    'Specialty Stores': ['Accessories','Antiques','Art','Art Gallery','Boat Supplies','Books',
+      'Coins and Stamps','Computer','Electrical Appliances','Electronics','Exchange','Eyewear','Fishing',
+      'Florist','Furniture','Glass','Hardware','Household Goods','Jewelry','Knives','Leather Goods',
+      'Light Store','Luxury','Metal Work','Music','Musical Instruments','Newspaper','Office Supplies',
+      'Pawn Shop','Pet Store','Picture Frames','Souvenirs','Sporting Goods','Stationery','Tobacco','Textiles',
+      'Toys','Woodwork','Other Retail'],
+    'Other': ['Closed','Undefined','Radio and Television','Stall']
+  }
+  const keys = Object.keys(shopTypes)
+  for (let i = 0; i < keys.length; i++){
+    const shopOptG = document.createElement('optgroup')
+    shopOptG.label = keys[i]
+    for (let j = 0; j < shopTypes[keys[i]].length; j++){
+      const shopOpt = document.createElement('option')
+      shopOpt.value = shopOpt.text = shopTypes[keys[i]][j]
+      shopOptG.appendChild(shopOpt)
+    }
+    storesOptions.push(shopOptG)
   }
 }
 
@@ -384,7 +409,6 @@ function setContent(pointInfo) {
                             return data
                           })
                           .then(function (data) {
-                            setBaselines()
                             setFeatures()
                             setPopup()
                             addLayer()
@@ -467,7 +491,6 @@ function setContent(pointInfo) {
                     return data
                   })
                   .then(function (data) {
-                    setBaselines()
                     setFeatures()
                     setPopup()
                     addLayer()
@@ -684,7 +707,6 @@ function setContent(pointInfo) {
                         return data
                       })
                       .then(function (data) {
-                        setBaselines()
                         setFeatures()
                         setPopup()
                         addLayer()
@@ -763,7 +785,6 @@ function setContent(pointInfo) {
               return data
             })
             .then(function (data) {
-              setBaselines()
               setFeatures()
               setPopup()
               addLayer()
@@ -1167,7 +1188,6 @@ function setAddLocation() {
                           return data
                         })
                         .then(function (data) {
-                          setBaselines()
                           setFeatures()
                           setPopup()
                           addLayer()
@@ -1202,109 +1222,93 @@ function setYearFilter() {
   const yearFilter = document.querySelector('#yearFilter')
   yearFilter.innerHTML = yearFilterDefault
 
-  let years = []
-  for (let i = 0; i < data.length; i++) {
-    for (let j = 0; j < data[i].info.length; j++) {
-      if (!years.includes(data[i].info[j].year_collected)) {
-        years.push(data[i].info[j].year_collected)
-      }
-    }
+  const yearSelect = document.createElement('select')
+  yearSelect.multiple = true
+  yearSelect.id = 'yearSelect'
+  yearSelect.onchange = filterFeatures
+
+  for (var i = 0; i < yearOptions.length; i++) {
+    yearSelect.appendChild(yearOptions[i]);
   }
 
-  years = years.sort().filter(year => year !== "")
+  yearFilter.appendChild(yearSelect)
 
-  for (let i = 0; i < years.length; i++) {
-    yearFilter.innerHTML = yearFilter.innerHTML + '<br><input type="checkbox" id="' + years[i] + 'box">'
-      + '<label for="' + years[i] + 'box">' + years[i] + '</label>'
-  }
-
-  for (let i = 0; i < years.length; i++) {
-    let box = document.getElementById(years[i] + 'box')
-    box.addEventListener("change", filterFeatures)
-  }
+  const yearSlimSelect = new SlimSelect({
+    select: '#yearSelect',
+  });
 }
 
 function setSestiereFilter() {
   const sestiereFilter = document.querySelector('#sestiereFilter')
   sestiereFilter.innerHTML = sestiereFilterDefault
 
-  let sestieres = []
-  for (let i = 0; i < data.length; i++) {
-    if (!sestieres.includes(data[i].address_sestiere)) {
-      sestieres.push(data[i].address_sestiere)
-    }
+  const sestiereSelect = document.createElement('select')
+  sestiereSelect.multiple = true
+  sestiereSelect.id = 'sestiereSelect'
+  sestiereSelect.onchange = filterFeatures
+
+  for (var i = 0; i < sestiereOptions.length; i++) {
+    sestiereSelect.appendChild(sestiereOptions[i]);
   }
 
-  sestieres = sestieres.sort().filter(group => group !== "")
+  sestiereFilter.appendChild(sestiereSelect)
 
-  for (let i = 0; i < sestieres.length; i++) {
-    sestiereFilter.innerHTML = sestiereFilter.innerHTML + '<br><input type="checkbox" id="' + sestieres[i] + 'box">'
-      + '<label for="' + sestieres[i] + 'box">' + sestieres[i] + '</label>'
-  }
-
-  for (let i = 0; i < sestieres.length; i++) {
-    let box = document.getElementById(sestieres[i] + 'box')
-    box.addEventListener("change", filterFeatures)
-  }
+  const sestiereSlimSelect = new SlimSelect({
+    select: '#sestiereSelect',
+  });
 }
 
 function setStoreFilter() {
   const storeFilter = document.querySelector('#storeFilter')
   storeFilter.innerHTML = storeFilterDefault
 
-  let stores = []
-  for (let i = 0; i < data.length; i++) {
-    for (let j = 0; j < data[i].info.length; j++) {
-      if (!stores.includes(data[i].info[j].store_type)) {
-        stores.push(data[i].info[j].store_type)
-      }
-    }
+  const storeSelect = document.createElement('select')
+  storeSelect.multiple = true
+  storeSelect.id = 'storeSelect'
+  storeSelect.onchange = filterFeatures
+
+  for (var i = 0; i < storesOptions.length; i++) {
+    storeSelect.appendChild(storesOptions[i]);
   }
 
-  stores = stores.sort().filter(store => store !== "")
+  storeFilter.appendChild(storeSelect)
 
-  for (let i = 0; i < stores.length; i++) {
-    storeFilter.innerHTML = storeFilter.innerHTML + '<br><input type="checkbox" id="' + stores[i] + 'box">'
-      + '<label for="' + stores[i] + 'box">' + stores[i] + '</label>'
-  }
-
-  for (let i = 0; i < stores.length; i++) {
-    let box = document.getElementById(stores[i] + 'box')
-    box.addEventListener("change", filterFeatures)
-  }
+  const storeSlimSelect = new SlimSelect({
+    select: '#storeSelect',
+  });
 }
 
 function filterFeatures(e) {
   removePopup()
-
   e.preventDefault()
 
-  target = e.target.id.slice(0, -3)
+  const yearSelecting = document.querySelector('#yearSelect')
+  yearTargets = []
+  for (let i = 0; i < yearSelecting.selectedOptions.length; i++){
+    yearTargets.push(yearSelecting.selectedOptions[i].value)
+  }
 
-  if (target === "flagged") {
-    if (e.target.checked) { flagTarget = true }
-    else { flagTarget = false }
+  const sestiereSelecting = document.querySelector('#sestiereSelect')
+  sestiereTargets = []
+  for (let i = 0; i < sestiereSelecting.selectedOptions.length; i++){
+    sestiereTargets.push(sestiereSelecting.selectedOptions[i].value)
   }
-  if (allYears.includes(target)) {
-    if (e.target.checked) { yearTargets.push(target) }
-    else { yearTargets.splice(yearTargets.indexOf(target), 1) }
-  }
-  else if (allSestieres.includes(target)) {
-    if (e.target.checked) { sestiereTargets.push(target) }
-    else { sestiereTargets.splice(sestiereTargets.indexOf(target), 1) }
-  }
-  else if (allStores.includes(target)) {
-    if (e.target.checked) { storeTargets.push(target) }
-    else { storeTargets.splice(storeTargets.indexOf(target), 1) }
+
+  const storeSelecting = document.querySelector('#storeSelect')
+  storeTargets = []
+  for (let i = 0; i < storeSelecting.selectedOptions.length; i++){
+    storeTargets.push(storeSelecting.selectedOptions[i].value)
   }
 
   data = JSON.parse(JSON.stringify(dataAll))
   
-  if (flagTarget) {
+  let flagged = document.querySelector('#flaggedbox')
+  if (flagged.checked) {
     for (let i = 0; i < data.length; i++) {
       data[i].info2 = data[i].info2.filter(item => item.flagged)
     }
   }
+
   if (yearTargets.length !== 0) {
     for (let i = 0; i < data.length; i++) {
       data[i].info2 = data[i].info2.filter(item => yearTargets.includes(String(item.year_collected)))

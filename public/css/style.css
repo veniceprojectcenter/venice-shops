@@ -77,3 +77,11 @@ h1, h3{
     grid-template-columns: repeat(5, 20%);
     grid-column-gap: 0px;
 }
+
+#yearFilter #sestiereFilter #shopFilter {
+    justify-content: center;
+}
+
+#numberDisplay {
+    margin-left: 8px;
+}
