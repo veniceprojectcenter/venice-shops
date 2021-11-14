@@ -51,6 +51,7 @@
 
 #filter {
     grid-column: -2;
+    font-family: 'Urbanist';
     background-color: aliceblue;
     z-index: 2;
     overflow: auto;
@@ -84,4 +85,8 @@ h1, h3{
 
 #numberDisplay {
     margin-left: 8px;
+}
+
+.imagePreview {
+    margin-top: 20px;
 }

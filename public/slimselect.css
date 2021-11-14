@@ -93,6 +93,7 @@
     cursor:pointer;
     min-height:30px;
     width:100%;
+    height: 40px;
     padding:0 0 0 3px;
     border:1px solid #dcdee2;
     border-radius:4px;
@@ -282,6 +283,8 @@
     padding-top:0
 }
 .ss-content .ss-list{
+    font-size: 16px;
+    font-family: 'Urbanist';
     max-height:200px;
     overflow-x:hidden;
     overflow-y:auto;
@@ -289,7 +292,8 @@
 }
 .ss-content .ss-list .ss-optgroup .ss-optgroup-label{
     padding:6px 10px;
-    font-weight:700
+    font-weight:700;
+    color: black;
 }
 .ss-content .ss-list .ss-optgroup .ss-option{
     padding:6px 6px 6px 25px

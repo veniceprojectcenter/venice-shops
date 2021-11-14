@@ -32,6 +32,8 @@ let allStores = []
 let yearOptions = []
 let sestiereOptions = []
 let storesOptions = []
+let sestiereOptions2 = []
+let storesOptions2 = []
 
 const yearFilterDefault = document.querySelector('#yearFilter').innerHTML
 const sestiereFilterDefault = document.querySelector('#sestiereFilter').innerHTML
@@ -49,7 +51,7 @@ function setBaselines() {
     }
   }
 
-  let yearNames = allYears.sort()
+  let yearNames = allYears.sort().reverse()
   for (let i = 0; i < yearNames.length; i++) {
     const yearOpt = document.createElement('option')
     yearOpt.value = yearOpt.text = yearNames[i]
@@ -61,6 +63,9 @@ function setBaselines() {
     const sesOpt = document.createElement('option')
     sesOpt.value = sesOpt.text = sestiereNames[i]
     sestiereOptions.push(sesOpt)
+    const sesOpt2 = document.createElement('option')
+    sesOpt2.value = sesOpt2.text = sestiereNames[i]
+    sestiereOptions2.push(sesOpt2)
   }
 
   const shopTypes = {
@@ -97,6 +102,15 @@ function setBaselines() {
       shopOptG.appendChild(shopOpt)
     }
     storesOptions.push(shopOptG)
+
+    const shopOptG2 = document.createElement('optgroup')
+    shopOptG2.label = keys[i]
+    for (let j = 0; j < shopTypes[keys[i]].length; j++){
+      const shopOpt2 = document.createElement('option')
+      shopOpt2.value = shopOpt2.text = shopTypes[keys[i]][j]
+      shopOptG2.appendChild(shopOpt2)
+    }
+    storesOptions2.push(shopOptG2)
   }
 }
 
@@ -224,6 +238,7 @@ function setContent(pointInfo) {
     content.innerHTML = ""
 
     const imagePreview = document.createElement("img")
+    imagePreview.setAttribute("class", "imagePreview")
     imagePreview.setAttribute("width", "200px")
     imagePreview.setAttribute("height", "200px")
     imagePreview.setAttribute("src", currInfo.image_url)
@@ -275,8 +290,8 @@ function setContent(pointInfo) {
     const storeInput = document.createElement("select")
     storeInput.setAttribute("id", "storeInput")
     storeInput.setAttribute("name", "storeInput")
-    for (let i = 0; i < storesOptions.length; i++) {
-      storeInput.add(storesOptions[i])
+    for (let i = 0; i < storesOptions2.length; i++) {
+      storeInput.add(storesOptions2[i])
     }
     storeInput.value = currInfo.store_type
     content.appendChild(storeInput)
@@ -524,6 +539,7 @@ function setContent(pointInfo) {
     content.innerHTML = ""
 
     const imagePreview = document.createElement("img")
+    imagePreview.setAttribute("class", "imagePreview")
     imagePreview.setAttribute("width", "200px")
     imagePreview.setAttribute("height", "200px")
     content.appendChild(imagePreview)
@@ -574,8 +590,8 @@ function setContent(pointInfo) {
     const storeInput = document.createElement("select")
     storeInput.setAttribute("id", "storeInput")
     storeInput.setAttribute("name", "storeInput")
-    for (let i = 0; i < storesOptions.length; i++) {
-      storeInput.add(storesOptions[i])
+    for (let i = 0; i < storesOptions2.length; i++) {
+      storeInput.add(storesOptions2[i])
     }
     storeInput.value = currInfo.store_type
     content.appendChild(storeInput)
@@ -811,8 +827,8 @@ function setContent(pointInfo) {
   }
   displayedInfo.innerHTML = displayedInfo.innerHTML
     + '<img src="' + currInfo.image_url + '" width="200px" height="200px">'
-    + '<h4>Street Address: ' + currInfo.address_street + '</h4>'
-    + '<h4>Store Type: ' + currInfo.store_type + '</h4>'
+    + '<h4>' + currInfo.address_street + '</h4>'
+    + '<h4>' + currInfo.store_type + '</h4>'
     + '<p>' + currInfo.note + '</p>'
   if (currInfo.flagged) {
     displayedInfo.innerHTML = displayedInfo.innerHTML + "<h1>Flagged</h1>"
@@ -914,8 +930,8 @@ function setAddLocation() {
     const sestiereInput = document.createElement("select")
     sestiereInput.setAttribute("id", "sestiereInput")
     sestiereInput.setAttribute("name", "sestiereInput")
-    for (let i = 0; i < sestiereOptions.length; i++) {
-      sestiereInput.add(sestiereOptions[i])
+    for (let i = 0; i < sestiereOptions2.length; i++) {
+      sestiereInput.add(sestiereOptions2[i])
     }
     content.appendChild(sestiereInput)
     content.appendChild(document.createElement("br"))
@@ -996,6 +1012,7 @@ function setAddLocation() {
     content.appendChild(document.createElement("br"))
 
     const imagePreview = document.createElement("img")
+    imagePreview.setAttribute("class", "imagePreview")
     imagePreview.setAttribute("width", "200px")
     imagePreview.setAttribute("height", "200px")
     content.appendChild(imagePreview)
@@ -1045,8 +1062,8 @@ function setAddLocation() {
     const storeInput = document.createElement("select")
     storeInput.setAttribute("id", "storeInput")
     storeInput.setAttribute("name", "storeInput")
-    for (let i = 0; i < storesOptions.length; i++) {
-      storeInput.add(storesOptions[i])
+    for (let i = 0; i < storesOptions2.length; i++) {
+      storeInput.add(storesOptions2[i])
     }
     content.appendChild(storeInput)
     const clearStore = document.createElement("button")
