@@ -901,6 +901,53 @@ function setGoToLocation() {
   }
 }
 
+function setDownload() {
+  const downloadButton = document.querySelector('#download')
+  downloadButton.onclick = function () {
+    var element = document.createElement('a');
+
+    let csvData = 'ID, Latitude, Longitude, Address, Sestiere, Year, Type, Closed?, Tourist?, Artisan?, Lodging?\n'
+    for (let i = 0; i < data.length; i++){
+      if (data[i].info2.length !== 0){
+        for (let j = 0; j < data[i].info.length; j++){
+          const thisInfo = data[i].info[j]
+          csvData = csvData + data[i].parent_id + ', '
+            + data[i].lat + ', '
+            + data[i].lng + ', '
+            + thisInfo.store_name + ', '
+            + data[i].address_street + ', '
+            + data[i].address_sestiere + ', '
+            + thisInfo.year_collected + ', '
+            + thisInfo.store_type + ', '
+
+          if (j === data[i].info.length - 1) { csvData = csvData + 'N/A, ' }
+          else if (thisInfo.store_type === data[i].info[j+1].store_type && thisInfo.store_type !== 'Closed') {
+            csvData = csvData + 'False' + ', '
+          }
+          else { csvData = csvData + 'True' + ', '}
+
+          const touristTypes = ['Mask', 'Souvenirs']
+          const artisanTypes = ['Mask', 'Bakery', 'Butcher', 'Pizzeria', 'Barber', 'Hair Salon', 'Jewelry Repair',
+                                'Leather Repair', 'Masseuse', 'Nail Salon', 'Spa', 'Tailor', 'Tattoo and Piercing',
+                                'Wedding', 'Antiques', 'Florist', 'Glass', 'Jewelry', 'Knives', 'Leather Goods',
+                                'Pawn Shop', 'Woodwork', 'Picture Frames']
+          const lodgingTypes = ['Bed and Breakfast', 'Guest Houses', 'Hotel', 'Hotel with Restaurant', 'Hostel']
+          csvData = csvData + (touristTypes.includes(thisInfo.store_type) ? 'True' : 'False') + ', '
+          + (artisanTypes.includes(thisInfo.store_type) ? 'True' : 'False') + ', '
+          + (lodgingTypes.includes(thisInfo.store_type) ? 'True' : 'False') + '\n'
+        } 
+      }
+    }
+
+    element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvData));
+    element.setAttribute('download', 'VeniceData.csv');
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  }
+}
+
 function setAddLocation() {
   const addLocation = document.querySelector('#addLocation')
   addLocation.onclick = function () {
@@ -1391,6 +1438,7 @@ window.onload = function () {
         setPopup()
         addLayer()
         setGoToLocation()
+        setDownload()
         setAddLocation()
         setFlagFilter()
         setYearFilter()
