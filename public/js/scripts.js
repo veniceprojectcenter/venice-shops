@@ -457,7 +457,7 @@ function setContent(pointInfo) {
             name: nameInput.value,
             note: noteInput.value,
             flagged: flagBox.checked,
-            image: "",
+            image: currInfo.image_url,
             year: parseInt(yearInput.value, 10),
             store: storeInput.value,
             group: "Undefined",
