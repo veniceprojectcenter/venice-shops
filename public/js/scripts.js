@@ -232,8 +232,8 @@ function setContent(pointInfo) {
   let currInfo = information[popupIndex]
 
   const editButton = document.createElement("button");
-  editButton.innerHTML = '<img src="./assets/pencil.png"/>'
-  editButton.id = 'editButton'
+  editButton.classList.add('outerIcon')
+  editButton.innerHTML = '<img class="icons" src="./assets/pencil.png"/>'
   editButton.onclick = function () {
     content.innerHTML = ""
 
@@ -531,10 +531,10 @@ function setContent(pointInfo) {
     }
     content.appendChild(submitButton)
   }
-  content.appendChild(editButton)
 
   const plusButton = document.createElement("button")
-  plusButton.innerHTML = '<img src="./assets/plus.png"/>'
+  plusButton.classList.add('outerIcon')
+  plusButton.innerHTML = '<img class="icons" src="./assets/plus.png"/>'
   plusButton.onclick = function () {
     content.innerHTML = ""
 
@@ -747,13 +747,12 @@ function setContent(pointInfo) {
           })
       }
     }
-
     content.appendChild(submitButton)
   }
-  content.appendChild(plusButton)
 
   const deleteButton = document.createElement("button")
-  deleteButton.innerHTML = '<img src="./assets/trash.png"/>'
+  deleteButton.classList.add('outerIcon')
+  deleteButton.innerHTML = '<img class="icons" src="./assets/trash.png"/>'
   deleteButton.onclick = function () {
     loadingPopup()
     addedJSON = {
@@ -815,7 +814,28 @@ function setContent(pointInfo) {
         return 0
       })
   }
-  content.appendChild(deleteButton)
+  
+  const popupGrid = document.createElement("div")
+  popupGrid.classList.add("popupGrid")
+
+  const col1 = document.createElement("h4")
+  if (currInfo.flagged) { col1.innerText = 'Flagged' }
+  const col5 = document.createElement("h2")
+  col5.innerText = currInfo.year_collected
+
+  col1.classList.add('popcol1')
+  editButton.classList.add('popcol2')
+  plusButton.classList.add('popcol3')
+  deleteButton.classList.add('popcol4')
+  col5.classList.add('popcol5')
+
+  popupGrid.appendChild(col1)
+  popupGrid.appendChild(editButton)
+  popupGrid.appendChild(plusButton)
+  popupGrid.appendChild(deleteButton)
+  popupGrid.appendChild(col5)
+
+  content.appendChild(popupGrid)
 
   const displayedInfo = document.createElement("div")
   if (currInfo.store_name !== "") {
@@ -827,35 +847,43 @@ function setContent(pointInfo) {
   }
   displayedInfo.innerHTML = displayedInfo.innerHTML
     + '<img src="' + currInfo.image_url + '" width="200px" height="200px">'
-    + '<h4>' + currInfo.address_street + '</h4>'
-    + '<h4>' + currInfo.store_type + '</h4>'
+    + '<h3>' + currInfo.address_street + '</h3>'
+    + '<h3>' + currInfo.store_type + '</h3>'
     + '<p>' + currInfo.note + '</p>'
-  if (currInfo.flagged) {
-    displayedInfo.innerHTML = displayedInfo.innerHTML + "<h1>Flagged</h1>"
-  }
-  displayedInfo.innerHTML = displayedInfo.innerHTML + "<h1>" + currInfo.year_collected + "</h1>"
   content.appendChild(displayedInfo)
 
   const pastButton = document.createElement("button");
-  pastButton.innerText = "Previous Year";
+  pastButton.innerText = "Previous Entry";
+  pastButton.id = "pastButton"
   pastButton.classList.add('scrollButton');
   pastButton.onclick = function () {
     if (popupIndex > 0) {
       popupIndex = popupIndex - 1
+      setContent(pointInfo)
     }
-    setContent(pointInfo)
   }
+  if (popupIndex === 0) {
+    pastButton.style.backgroundColor = "grey";
+    pastButton.disabled = true
+  }
+  else{ pastButton.style.backgroundColor = "gainsboro" }
   content.appendChild(pastButton)
 
   const futureButton = document.createElement("button");
-  futureButton.innerText = "Next Year";
+  futureButton.innerText = "Next Entry";
+  futureButton.id = "futureButton"
   futureButton.classList.add('scrollButton');
   futureButton.onclick = function () {
     if (popupIndex < information.length - 1) {
       popupIndex = popupIndex + 1
+      setContent(pointInfo)
     }
-    setContent(pointInfo)
   }
+  if (popupIndex === information.length - 1) {
+    futureButton.style.backgroundColor = "grey";
+    futureButton.disabled = true
+  }
+  else{ futureButton.style.backgroundColor = "gainsboro" }
   content.appendChild(futureButton)
 }
 
@@ -906,7 +934,7 @@ function setDownload() {
   downloadButton.onclick = function () {
     var element = document.createElement('a');
 
-    let csvData = 'ID, Latitude, Longitude, Address, Sestiere, Year, Type, Closed?, Tourist?, Artisan?, Lodging?\n'
+    let csvData = 'ID, Latitude, Longitude, Name, Address, Sestiere, Year, Type, Closed?, Tourist?, Artisan?, Lodging?\n'
     for (let i = 0; i < data.length; i++){
       if (data[i].info2.length !== 0){
         for (let j = 0; j < data[i].info.length; j++){
@@ -914,8 +942,8 @@ function setDownload() {
           csvData = csvData + data[i].parent_id + ', '
             + data[i].lat + ', '
             + data[i].lng + ', '
-            + thisInfo.store_name + ', '
-            + data[i].address_street + ', '
+            + String(thisInfo.store_name).split(',').join("") + ', '
+            + String(data[i].address_street).split(',').join("") + ', '
             + data[i].address_sestiere + ', '
             + thisInfo.year_collected + ', '
             + thisInfo.store_type + ', '

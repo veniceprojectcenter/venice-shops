@@ -12,6 +12,15 @@
     color: aliceblue;
 }
 
+.popupGrid {
+    display: grid;
+    grid-template-columns: 25% auto auto auto 25%;
+    width: 90%;
+    margin-top: 8px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 .col1 {
     grid-column: 1;
     margin-top: auto;
@@ -57,7 +66,7 @@
     overflow: auto;
 }
 
-h1, h3{
+h1, h2, h3{
     text-align: center;
 }
 
@@ -66,10 +75,8 @@ h1, h3{
     height: 40px;
     border-radius: 10px;
     text-align: center;
-}
-
-#editButton{
-    margin-top: 15px;
+    font-family: "Urbanist";
+    font-size: medium;
 }
 
 .grid {
@@ -89,4 +96,48 @@ h1, h3{
 
 .imagePreview {
     margin-top: 20px;
+}
+
+.outerIcon {
+    width: 44px;
+    height: 44px;
+    padding-left: 0%;
+}
+
+.icons {
+    width: 40px;
+    height: 40px;
+    padding: 0%;
+}
+
+.popcol1 {
+    text-align: left;
+}
+
+.popcol2 {
+    margin: auto;
+}
+
+.popcol3 {
+    margin: auto;
+}
+
+.popcol4 {
+    margin: auto;
+}
+
+.popcol5 {
+    text-align: right;
+}
+
+#pastButton {
+    position: absolute;
+    left: 20px;
+    bottom: 20px ;
+}
+
+#futureButton {
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
 }
