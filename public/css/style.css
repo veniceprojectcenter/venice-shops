@@ -28,10 +28,6 @@
     margin-right: 70%
 }
 
-.col2 {
-    grid-column: 2;
-}
-
 .col3 {
     grid-column: 3;
     margin-top: auto;
@@ -140,4 +136,8 @@ h1, h2, h3{
     position: absolute;
     right: 20px;
     bottom: 20px;
+}
+
+#timelapseButton {
+    margin-left: 30%;
 }

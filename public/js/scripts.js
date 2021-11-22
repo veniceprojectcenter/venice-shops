@@ -18,16 +18,15 @@ let newfeatures = []
 let map
 let layer
 
-let years = []
-
-let flagTarget;
 let yearTargets = []
 let sestiereTargets = []
 let storeTargets = []
 
+let timelapsing = false
+let timelapseInterval;
+
 let allYears = []
 let allSestieres = []
-let allStores = []
 
 let yearOptions = []
 let sestiereOptions = []
@@ -934,7 +933,7 @@ function setDownload() {
   downloadButton.onclick = function () {
     var element = document.createElement('a');
 
-    let csvData = 'ID, Latitude, Longitude, Name, Address, Sestiere, Year, Type, Closed?, Tourist?, Artisan?, Lodging?\n'
+    let csvData = 'ID, Latitude, Longitude, Name, Number, Address, Sestiere, Year, Type, Closed?, Tourist?, Artisan?, Lodging?\n'
     for (let i = 0; i < data.length; i++){
       if (data[i].info2.length !== 0){
         for (let j = 0; j < data[i].info.length; j++){
@@ -943,6 +942,7 @@ function setDownload() {
             + data[i].lat + ', '
             + data[i].lng + ', '
             + String(thisInfo.store_name).split(',').join("") + ', '
+            + data[i].address_num + ', '
             + String(data[i].address_street).split(',').join("") + ', '
             + data[i].address_sestiere + ', '
             + thisInfo.year_collected + ', '
@@ -1370,14 +1370,64 @@ function setStoreFilter() {
   });
 }
 
-function filterFeatures(e) {
-  removePopup()
-  e.preventDefault()
+function setTimelapse() {
+  const timelapseButton = document.querySelector('#timelapseButton')
+  timelapseButton.onclick = startTimelapse
+}
+
+function startTimelapse() {
+  timelapsing = true
+  const timelapseButton = document.querySelector('#timelapseButton')
+  timelapseButton.innerText = 'Stop Cycling'
+  timelapseButton.onclick = stopTimelapse
+  const yearDisplay = document.querySelector('#yearDisplay')
 
   const yearSelecting = document.querySelector('#yearSelect')
-  yearTargets = []
-  for (let i = 0; i < yearSelecting.selectedOptions.length; i++){
-    yearTargets.push(yearSelecting.selectedOptions[i].value)
+  let allYearTargets = []
+  for (let i = yearSelecting.selectedOptions.length - 1; i >= 0; i--){
+    allYearTargets.push(yearSelecting.selectedOptions[i].value)
+  }
+
+  if (allYearTargets.length === 0){
+    allYearTargets = allYears.sort()
+  }
+
+  let yearIndex = 0
+  yearTargets = allYearTargets[yearIndex]
+  filterFeatures()
+  yearDisplay.innerText = allYearTargets[yearIndex]
+  yearIndex = yearIndex + 1
+  if (yearIndex === allYearTargets.length) { yearIndex = 0 }
+  
+  timelapseInterval = setInterval(function () {
+    yearTargets = allYearTargets[yearIndex]
+    filterFeatures()
+    yearDisplay.innerText = allYearTargets[yearIndex]
+    yearIndex = yearIndex + 1
+    if (yearIndex === allYearTargets.length) { yearIndex = 0 }
+  }, 1000)
+}
+
+function stopTimelapse() {
+  timelapsing = false
+  clearInterval(timelapseInterval)
+  const timelapseButton = document.querySelector('#timelapseButton')
+  timelapseButton.innerText = 'Cycle years'
+  timelapseButton.onclick = startTimelapse
+  const yearDisplay = document.querySelector('#yearDisplay')
+  yearDisplay.innerText = ''
+  filterFeatures()
+}
+
+function filterFeatures() {
+  removePopup()
+
+  if (!timelapsing) {
+    const yearSelecting = document.querySelector('#yearSelect')
+    yearTargets = []
+    for (let i = 0; i < yearSelecting.selectedOptions.length; i++){
+      yearTargets.push(yearSelecting.selectedOptions[i].value)
+    }
   }
 
   const sestiereSelecting = document.querySelector('#sestiereSelect')
@@ -1472,6 +1522,7 @@ window.onload = function () {
         setYearFilter()
         setSestiereFilter()
         setStoreFilter()
+        setTimelapse()
         return 0
       })
   })
