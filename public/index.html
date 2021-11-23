@@ -20,6 +20,9 @@
       <button class="outerIcon" id="gotoLocation">
         <img class="icons" src="assets/gps.png" />
       </button>
+      <button class="outerIcon" id="goHome">
+        <img class="icons" src="assets/home.png" />
+      </button>
     </div>
     <h1 class="col2">VENICE SHOPS</h1>
     <div class="col3">
@@ -36,10 +39,6 @@
     <div id="map" class="map"></div>
 
     <div id="filter">
-      <div id='collected'>
-        <h2>Items selected:</h2>
-        <h2 id="numberDisplay"></h2>
-      </div>
       <h1>Filters</h1>
       <h2 id="flagFilter">Flagged</h2>
       <h2 id="yearFilter">Years Collected</h2>
@@ -47,6 +46,10 @@
       <h2 id="storeFilter">Shop Type</h2>
       <button class="scrollButton" id="timelapseButton">Cycle years</button>
       <h1 id=yearDisplay></h1>
+      <div id='collected'>
+        <h2>Items selected:</h2>
+        <h2 id="numberDisplay"></h2>
+      </div>
     </div>
   </div>
 
@@ -54,6 +57,8 @@
     <a href="#" id="popup-closer" class="ol-popup-closer"></a>
     <div id="popup-content"></div>
   </div>
+
+  <p id="abbvPopup"><p>
 </body>
 
 </html>

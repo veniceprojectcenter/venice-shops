@@ -18,6 +18,10 @@ let newfeatures = []
 let map
 let layer
 
+let abbvPopup = document.querySelector('#abbvPopup')
+const abbvs = { "Cannargeio": "CN", "Castello": "CS", "San Marco": "SM", "Dorsoduro": "DD",
+                "San Polo": "SP", "Santa Croce": "SC", "Giudecca": "GD"}
+
 let yearTargets = []
 let sestiereTargets = []
 let storeTargets = []
@@ -37,6 +41,8 @@ let storesOptions2 = []
 const yearFilterDefault = document.querySelector('#yearFilter').innerHTML
 const sestiereFilterDefault = document.querySelector('#sestiereFilter').innerHTML
 const storeFilterDefault = document.querySelector('#storeFilter').innerHTML
+
+let popupPresent = false
 
 function setBaselines() {
   for (let i = 0; i < data.length; i++) {
@@ -122,7 +128,9 @@ function setFeatures() {
         _id: data[i]._id,
         address: data[i]["address_sestiere"] + " " + data[i]["address_num"],
         address_street: data[i]["address_street"],
+        address_abbv: abbvs[data[i]["address_sestiere"]] + " " + data[i]["address_num"],
         parent_id: data[i].parent_id,
+        last_name: data[i].info[data[i].info.length-1].store_name,
         info: data[i].info
       })
       newfeatures.push(next)
@@ -133,6 +141,7 @@ function setFeatures() {
 }
 
 function removePopup() {
+  popupPresent = false
   overlay.setPosition(undefined);
   closer.blur();
 }
@@ -168,17 +177,30 @@ function setMap() {
   addLayer();
 
   map.on('singleclick', function (event) {
-    if (map.hasFeatureAtPixel(event.pixel) === true) {
+    if (map.hasFeatureAtPixel(event.pixel)) {
+      popupPresent = true
+      abbvPopup.innerText = ''
       let pointInfo = map.getFeaturesAtPixel(event.pixel)[0].A
       popupIndex = pointInfo.info.length - 1
       setContent(pointInfo)
 
       overlay.setOffset([-200, -300])
       overlay.setPosition(ol.proj.transform([mapX, mapY], 'EPSG:4326', 'EPSG:3857'))
-    } else {
-      removePopup()
-    }
+    } else { removePopup() }
   });
+
+  map.on('pointermove', function (event) {
+    if (!popupPresent && map.hasFeatureAtPixel(event.pixel)){
+      let pointInfo = map.getFeaturesAtPixel(event.pixel)[0].A
+      if (abbvPopup.innerText !== pointInfo.address){
+        abbvPopup.style.top = event.originalEvent.pageY + 'px'
+        abbvPopup.style.left = event.originalEvent.pageX + 'px'
+        if (pointInfo.last_name === '') { abbvPopup.innerText = pointInfo.address_abbv }
+        else { abbvPopup.innerHTML = pointInfo.last_name}
+      }
+    }
+    else { abbvPopup.innerText = '' }
+  })
 
   map.on('movestart', function (e) {
     removePopup()
@@ -252,40 +274,41 @@ function setContent(pointInfo) {
     content.appendChild(imageInput)
     content.appendChild(document.createElement("br"))
 
+    const inputGrid = document.createElement("div")
+    inputGrid.classList.add("inputGrid")
+
     const nameLabel = document.createElement("label")
     nameLabel.setAttribute("for", "nameInput")
-    nameLabel.innerText = "Store Name:"
-    content.appendChild(nameLabel)
+    nameLabel.innerText = "Name:"
+    inputGrid.appendChild(nameLabel)
     const nameInput = document.createElement("input")
     nameInput.setAttribute("id", "nameInput")
     nameInput.setAttribute("name", "nameInput")
     nameInput.value = currInfo.store_name
-    content.appendChild(nameInput)
+    inputGrid.appendChild(nameInput)
     const clearName = document.createElement("button")
     clearName.innerText = "Clear"
     clearName.onclick = function () { nameInput.value = "" }
-    content.appendChild(clearName)
-    content.appendChild(document.createElement("br"))
+    inputGrid.appendChild(clearName)
 
     const yearLabel = document.createElement("label")
     yearLabel.setAttribute("for", "yearInput")
-    yearLabel.innerText = "Year Collected:"
-    content.appendChild(yearLabel)
+    yearLabel.innerText = "Year:"
+    inputGrid.appendChild(yearLabel)
     const yearInput = document.createElement("input")
     yearInput.setAttribute("id", "yearInput")
     yearInput.setAttribute("name", "yearInput")
     yearInput.value = currInfo.year_collected
-    content.appendChild(yearInput)
+    inputGrid.appendChild(yearInput)
     const clearYear = document.createElement("button")
     clearYear.innerText = "Clear"
     clearYear.onclick = function () { yearInput.value = "" }
-    content.appendChild(clearYear)
-    content.appendChild(document.createElement("br"))
+    inputGrid.appendChild(clearYear)
 
     const storeLabel = document.createElement("label")
     storeLabel.setAttribute("for", "storeInput")
-    storeLabel.innerText = "Store Type:"
-    content.appendChild(storeLabel)
+    storeLabel.innerText = "Type:"
+    inputGrid.appendChild(storeLabel)
     const storeInput = document.createElement("select")
     storeInput.setAttribute("id", "storeInput")
     storeInput.setAttribute("name", "storeInput")
@@ -293,27 +316,26 @@ function setContent(pointInfo) {
       storeInput.add(storesOptions2[i])
     }
     storeInput.value = currInfo.store_type
-    content.appendChild(storeInput)
+    inputGrid.appendChild(storeInput)
     const clearStore = document.createElement("button")
     clearStore.innerText = "Clear"
-    clearStore.onclick = function () { storeInput.value = "" }
-    content.appendChild(clearStore)
-    content.appendChild(document.createElement("br"))
+    clearStore.onclick = function () { storeInput.value = "Undefined" }
+    inputGrid.appendChild(clearStore)
 
     const noteLabel = document.createElement("label")
     noteLabel.setAttribute("for", "noteInput")
     noteLabel.innerText = "Note:"
-    content.appendChild(noteLabel)
+    inputGrid.appendChild(noteLabel)
     const noteInput = document.createElement("input")
     noteInput.setAttribute("id", "noteInput")
     noteInput.setAttribute("name", "noteInput")
     noteInput.value = currInfo.note
-    content.appendChild(noteInput)
+    inputGrid.appendChild(noteInput)
     const clearNote = document.createElement("button")
     clearNote.innerText = "Clear"
     clearNote.onclick = function () { noteInput.value = "" }
-    content.appendChild(clearNote)
-    content.appendChild(document.createElement("br"))
+    inputGrid.appendChild(clearNote)
+    content.appendChild(inputGrid)
 
     const flagLabel = document.createElement("label")
     flagLabel.setAttribute("for", "flagbox")
@@ -326,19 +348,25 @@ function setContent(pointInfo) {
     flagBox.checked = currInfo.flagged
     content.appendChild(flagBox)
     content.appendChild(document.createElement("br"))
+    content.appendChild(document.createElement("br"))
 
     const cancelButton = document.createElement("button")
     cancelButton.innerText = "cancel"
     cancelButton.classList.add("scrollButton")
+    cancelButton.classList.add("leftButton")
     cancelButton.onclick = function () { setContent(pointInfo) }
     content.appendChild(cancelButton)
 
     const submitButton = document.createElement("button")
     submitButton.innerText = "submit"
     submitButton.classList.add("scrollButton")
+    submitButton.classList.add("rightButton")
     submitButton.onclick = function () {
       if (isNaN(yearInput.value)) {
         alert("Year Collected must be a number")
+      }
+      else if (flagBox.checked && noteInput.value === '') {
+        alert("A flagged entry requires a note")
       }
       else {
         loadingPopup()
@@ -426,7 +454,6 @@ function setContent(pointInfo) {
                             setFeatures()
                             setPopup()
                             addLayer()
-                            setFlagFilter()
                             setYearFilter()
                             setSestiereFilter()
                             setStoreFilter()
@@ -508,7 +535,6 @@ function setContent(pointInfo) {
                     setFeatures()
                     setPopup()
                     addLayer()
-                    setFlagFilter()
                     setYearFilter()
                     setSestiereFilter()
                     setStoreFilter()
@@ -552,40 +578,41 @@ function setContent(pointInfo) {
     content.appendChild(imageInput)
     content.appendChild(document.createElement("br"))
 
+    const inputGrid = document.createElement("div")
+    inputGrid.classList.add("inputGrid")
+
     const nameLabel = document.createElement("label")
     nameLabel.setAttribute("for", "nameInput")
-    nameLabel.innerText = "Store Name:"
-    content.appendChild(nameLabel)
+    nameLabel.innerText = "Name:"
+    inputGrid.appendChild(nameLabel)
     const nameInput = document.createElement("input")
     nameInput.setAttribute("id", "nameInput")
     nameInput.setAttribute("name", "nameInput")
     nameInput.value = currInfo.store_name
-    content.appendChild(nameInput)
+    inputGrid.appendChild(nameInput)
     const clearName = document.createElement("button")
     clearName.innerText = "Clear"
     clearName.onclick = function () { nameInput.value = "" }
-    content.appendChild(clearName)
-    content.appendChild(document.createElement("br"))
+    inputGrid.appendChild(clearName)
 
     const yearLabel = document.createElement("label")
     yearLabel.setAttribute("for", "yearInput")
-    yearLabel.innerText = "Year Collected:"
-    content.appendChild(yearLabel)
+    yearLabel.innerText = "Year:"
+    inputGrid.appendChild(yearLabel)
     const yearInput = document.createElement("input")
     yearInput.setAttribute("id", "yearInput")
     yearInput.setAttribute("name", "yearInput")
     yearInput.value = new Date().getFullYear()
-    content.appendChild(yearInput)
+    inputGrid.appendChild(yearInput)
     const clearYear = document.createElement("button")
     clearYear.innerText = "Clear"
     clearYear.onclick = function () { yearInput.value = "" }
-    content.appendChild(clearYear)
-    content.appendChild(document.createElement("br"))
+    inputGrid.appendChild(clearYear)
 
     const storeLabel = document.createElement("label")
     storeLabel.setAttribute("for", "storeInput")
-    storeLabel.innerText = "Store Type:"
-    content.appendChild(storeLabel)
+    storeLabel.innerText = "Type:"
+    inputGrid.appendChild(storeLabel)
     const storeInput = document.createElement("select")
     storeInput.setAttribute("id", "storeInput")
     storeInput.setAttribute("name", "storeInput")
@@ -593,26 +620,25 @@ function setContent(pointInfo) {
       storeInput.add(storesOptions2[i])
     }
     storeInput.value = currInfo.store_type
-    content.appendChild(storeInput)
+    inputGrid.appendChild(storeInput)
     const clearStore = document.createElement("button")
     clearStore.innerText = "Clear"
-    clearStore.onclick = function () { storeInput.value = "" }
-    content.appendChild(clearStore)
-    content.appendChild(document.createElement("br"))
+    clearStore.onclick = function () { storeInput.value = "Undefined" }
+    inputGrid.appendChild(clearStore)
 
     const noteLabel = document.createElement("label")
     noteLabel.setAttribute("for", "noteInput")
     noteLabel.innerText = "Note:"
-    content.appendChild(noteLabel)
+    inputGrid.appendChild(noteLabel)
     const noteInput = document.createElement("input")
     noteInput.setAttribute("id", "noteInput")
     noteInput.setAttribute("name", "noteInput")
-    content.appendChild(noteInput)
+    inputGrid.appendChild(noteInput)
     const clearNote = document.createElement("button")
     clearNote.innerText = "Clear"
     clearNote.onclick = function () { noteInput.value = "" }
-    content.appendChild(clearNote)
-    content.appendChild(document.createElement("br"))
+    inputGrid.appendChild(clearNote)
+    content.appendChild(inputGrid)
 
     const flagLabel = document.createElement("label")
     flagLabel.setAttribute("for", "flagbox")
@@ -625,22 +651,28 @@ function setContent(pointInfo) {
     flagBox.checked = currInfo.flagged
     content.appendChild(flagBox)
     content.appendChild(document.createElement("br"))
+    content.appendChild(document.createElement("br"))
 
     const cancelButton = document.createElement("button")
     cancelButton.innerText = "cancel"
     cancelButton.classList.add("scrollButton")
+    cancelButton.classList.add("leftButton")
     cancelButton.onclick = function () { setContent(pointInfo) }
     content.appendChild(cancelButton)
 
     const submitButton = document.createElement("button")
     submitButton.innerText = "submit"
     submitButton.classList.add("scrollButton")
+    submitButton.classList.add("rightButton")
     submitButton.onclick = function () {
       if (imageInput.files.length === 0) {
         alert("Every data point must include a picture")
       }
       else if (isNaN(yearInput.value)) {
         alert("Year Collected must be a number")
+      }
+      else if (flagBox.checked && noteInput.value === '') {
+        alert("A flagged entry requires a note")
       }
       else {
         loadingPopup()
@@ -725,7 +757,6 @@ function setContent(pointInfo) {
                         setFeatures()
                         setPopup()
                         addLayer()
-                        setFlagFilter()
                         setYearFilter()
                         setSestiereFilter()
                         setStoreFilter()
@@ -802,7 +833,6 @@ function setContent(pointInfo) {
               setFeatures()
               setPopup()
               addLayer()
-              setFlagFilter()
               setYearFilter()
               setSestiereFilter()
               setStoreFilter()
@@ -853,7 +883,7 @@ function setContent(pointInfo) {
 
   const pastButton = document.createElement("button");
   pastButton.innerText = "Previous Entry";
-  pastButton.id = "pastButton"
+  pastButton.classList.add("leftButton")
   pastButton.classList.add('scrollButton');
   pastButton.onclick = function () {
     if (popupIndex > 0) {
@@ -870,7 +900,7 @@ function setContent(pointInfo) {
 
   const futureButton = document.createElement("button");
   futureButton.innerText = "Next Entry";
-  futureButton.id = "futureButton"
+  futureButton.classList.add("rightButton")
   futureButton.classList.add('scrollButton');
   futureButton.onclick = function () {
     if (popupIndex < information.length - 1) {
@@ -928,6 +958,14 @@ function setGoToLocation() {
   }
 }
 
+function setGoHome() {
+  const goHome = document.querySelector('#goHome')
+  goHome.onclick = function () {
+    map.getView().setZoom(14.5)
+    map.getView().setCenter(ol.proj.transform([centerX, centerY], 'EPSG:4326', 'EPSG:3857'))
+  }
+}
+
 function setDownload() {
   const downloadButton = document.querySelector('#download')
   downloadButton.onclick = function () {
@@ -979,24 +1017,11 @@ function setDownload() {
 function setAddLocation() {
   const addLocation = document.querySelector('#addLocation')
   addLocation.onclick = function () {
+    popupPresent = true
     overlay.setOffset([-200, -300])
     overlay.setPosition(ol.proj.transform([mapX, mapY], 'EPSG:4326', 'EPSG:3857'))
 
     content.innerHTML = ""
-
-    const streetLabel = document.createElement("label")
-    streetLabel.setAttribute("for", "streetInput")
-    streetLabel.innerText = "Street: "
-    content.appendChild(streetLabel)
-    const streetInput = document.createElement("input")
-    streetInput.setAttribute("id", "streetInput")
-    streetInput.setAttribute("name", "streetInput")
-    content.appendChild(streetInput)
-    const clearStreet = document.createElement("button")
-    clearStreet.innerText = "Clear"
-    clearStreet.onclick = function () { streetInput.value = "" }
-    content.appendChild(clearStreet)
-    content.appendChild(document.createElement("br"))
 
     const sestiereLabel = document.createElement("label")
     sestiereLabel.setAttribute("for", "sestiereInput")
@@ -1011,72 +1036,88 @@ function setAddLocation() {
     content.appendChild(sestiereInput)
     content.appendChild(document.createElement("br"))
 
+    const inputGrid1 = document.createElement("div")
+    inputGrid1.classList.add('inputGrid2')
+
+    const streetLabel = document.createElement("label")
+    streetLabel.setAttribute("for", "streetInput")
+    streetLabel.innerText = "Street: "
+    inputGrid1.appendChild(streetLabel)
+    const streetInput = document.createElement("input")
+    streetInput.setAttribute("id", "streetInput")
+    streetInput.setAttribute("name", "streetInput")
+    inputGrid1.appendChild(streetInput)
+    const clearStreet = document.createElement("button")
+    clearStreet.innerText = "Clear"
+    clearStreet.onclick = function () { streetInput.value = "" }
+    inputGrid1.appendChild(clearStreet)
+
     const numberLabel = document.createElement("label")
     numberLabel.setAttribute("for", "numberInput")
     numberLabel.innerText = "Number: "
-    content.appendChild(numberLabel)
+    inputGrid1.appendChild(numberLabel)
     const numberInput = document.createElement("input")
     numberInput.setAttribute("id", "numberInput")
     numberInput.setAttribute("name", "numberInput")
-    content.appendChild(numberInput)
+    inputGrid1.appendChild(numberInput)
     const clearNumber = document.createElement("button")
     clearNumber.innerText = "Clear"
     clearNumber.onclick = function () { numberInput.value = "" }
-    content.appendChild(clearNumber)
-    content.appendChild(document.createElement("br"))
+    inputGrid1.appendChild(clearNumber)
 
     const latLabel = document.createElement("label")
     latLabel.setAttribute("for", "latInput")
     latLabel.innerText = "Latitude: "
-    content.appendChild(latLabel)
+    inputGrid1.appendChild(latLabel)
     const latInput = document.createElement("input")
     latInput.setAttribute("id", "latInput")
     latInput.setAttribute("name", "latInput")
-    content.appendChild(latInput)
+    inputGrid1.appendChild(latInput)
     const clearLat = document.createElement("button")
     clearLat.innerText = "Clear"
     clearLat.onclick = function () { latInput.value = "" }
-    content.appendChild(clearLat)
-    content.appendChild(document.createElement("br"))
+    inputGrid1.appendChild(clearLat)
 
     const lngLabel = document.createElement("label")
     lngLabel.setAttribute("for", "lngInput")
     lngLabel.innerText = "Longitude: "
-    content.appendChild(lngLabel)
+    inputGrid1.appendChild(lngLabel)
     const lngInput = document.createElement("input")
     lngInput.setAttribute("id", "lngInput")
     lngInput.setAttribute("name", "lngInput")
-    content.appendChild(lngInput)
+    inputGrid1.appendChild(lngInput)
     const clearLng = document.createElement("button")
     clearLng.innerText = "Clear"
     clearLng.onclick = function () { lngInput.value = "" }
-    content.appendChild(clearLng)
-    content.appendChild(document.createElement("br"))
+    inputGrid1.appendChild(clearLng)
+    content.appendChild(inputGrid1)
 
     const findCoords = document.createElement("button")
     findCoords.innerText = "Find Coordinates"
     findCoords.classList.add("scrollButton")
+    findCoords.style.width = "150px"
     findCoords.onclick = function () {
       removePopup()
 
       alert("Click a location to set the coordinates of the new store")
 
       map.on('singleclick', function (event) {
+        popupPresent = true
         const coords = ol.proj.transform(event.coordinate, 'EPSG:3857', 'EPSG:4326')
         latInput.value = coords[1]
         lngInput.value = coords[0]
 
         map.on('singleclick', function (event) {
           if (map.hasFeatureAtPixel(event.pixel) === true) {
+            popupPresent = true
+            abbvPopup.innerText = ''
             let pointInfo = map.getFeaturesAtPixel(event.pixel)[0].A
             popupIndex = pointInfo.info.length - 1
             setContent(pointInfo)
 
             overlay.setOffset([-200, -300])
             overlay.setPosition(ol.proj.transform([mapX, mapY], 'EPSG:4326', 'EPSG:3857'))
-          } else {
-            removePopup()
-          }
+          } else { removePopup() }
         });
 
         overlay.setOffset([-200, -300])
@@ -1101,65 +1142,65 @@ function setAddLocation() {
     content.appendChild(imageInput)
     content.appendChild(document.createElement("br"))
 
+    const inputGrid2 = document.createElement("div")
+    inputGrid2.classList.add('inputGrid2')
+
     const nameLabel = document.createElement("label")
     nameLabel.setAttribute("for", "nameInput")
-    nameLabel.innerText = "Store Name:"
-    content.appendChild(nameLabel)
+    nameLabel.innerText = "Name:"
+    inputGrid2.appendChild(nameLabel)
     const nameInput = document.createElement("input")
     nameInput.setAttribute("id", "nameInput")
     nameInput.setAttribute("name", "nameInput")
-    content.appendChild(nameInput)
+    inputGrid2.appendChild(nameInput)
     const clearName = document.createElement("button")
     clearName.innerText = "Clear"
     clearName.onclick = function () { nameInput.value = "" }
-    content.appendChild(clearName)
-    content.appendChild(document.createElement("br"))
+    inputGrid2.appendChild(clearName)
 
     const yearLabel = document.createElement("label")
     yearLabel.setAttribute("for", "yearInput")
-    yearLabel.innerText = "Year Collected:"
-    content.appendChild(yearLabel)
+    yearLabel.innerText = "Year:"
+    inputGrid2.appendChild(yearLabel)
     const yearInput = document.createElement("input")
     yearInput.setAttribute("id", "yearInput")
     yearInput.setAttribute("name", "yearInput")
     yearInput.value = new Date().getFullYear()
-    content.appendChild(yearInput)
+    inputGrid2.appendChild(yearInput)
     const clearYear = document.createElement("button")
     clearYear.innerText = "Clear"
     clearYear.onclick = function () { yearInput.value = "" }
-    content.appendChild(clearYear)
-    content.appendChild(document.createElement("br"))
+    inputGrid2.appendChild(clearYear)
 
     const storeLabel = document.createElement("label")
     storeLabel.setAttribute("for", "storeInput")
-    storeLabel.innerText = "Store Type:"
-    content.appendChild(storeLabel)
+    storeLabel.innerText = "Type:"
+    inputGrid2.appendChild(storeLabel)
     const storeInput = document.createElement("select")
     storeInput.setAttribute("id", "storeInput")
     storeInput.setAttribute("name", "storeInput")
     for (let i = 0; i < storesOptions2.length; i++) {
       storeInput.add(storesOptions2[i])
     }
-    content.appendChild(storeInput)
+    inputGrid2.appendChild(storeInput)
     const clearStore = document.createElement("button")
     clearStore.innerText = "Clear"
-    clearStore.onclick = function () { storeInput.value = "" }
-    content.appendChild(clearStore)
-    content.appendChild(document.createElement("br"))
+    clearStore.onclick = function () { storeInput.value = "Undefined" }
+    inputGrid2.appendChild(clearStore)
 
     const noteLabel = document.createElement("label")
     noteLabel.setAttribute("for", "noteInput")
     noteLabel.innerText = "Note:"
-    content.appendChild(noteLabel)
+    inputGrid2.appendChild(noteLabel)
     const noteInput = document.createElement("input")
     noteInput.setAttribute("id", "noteInput")
     noteInput.setAttribute("name", "noteInput")
-    content.appendChild(noteInput)
+    inputGrid2.appendChild(noteInput)
     const clearNote = document.createElement("button")
     clearNote.innerText = "Clear"
     clearNote.onclick = function () { noteInput.value = "" }
-    content.appendChild(clearNote)
-    content.appendChild(document.createElement("br"))
+    inputGrid2.appendChild(clearNote)
+    content.appendChild(inputGrid2)
 
     const flagLabel = document.createElement("label")
     flagLabel.setAttribute("for", "flagbox")
@@ -1175,6 +1216,7 @@ function setAddLocation() {
     const cancelButton = document.createElement("button")
     cancelButton.innerText = "cancel"
     cancelButton.classList.add("scrollButton")
+    cancelButton.classList.add("leftButton")
     cancelButton.onclick = function () {
       removePopup()
     }
@@ -1183,6 +1225,7 @@ function setAddLocation() {
     const submitButton = document.createElement("button")
     submitButton.innerText = "submit"
     submitButton.classList.add("scrollButton")
+    submitButton.classList.add("rightButton")
     submitButton.onclick = function () {
       if (numberInput.value = "") {
         alert("Address Number cannot be left blank")
@@ -1198,6 +1241,9 @@ function setAddLocation() {
       }
       else if (isNaN(yearInput.value)) {
         alert("Year Collected must be a number")
+      }
+      else if (flagBox.checked && noteInput.value === '') {
+        alert("A flagged entry requires a note")
       }
       else {
         loadingPopup()
@@ -1283,7 +1329,6 @@ function setAddLocation() {
                           setFeatures()
                           setPopup()
                           addLayer()
-                          setFlagFilter()
                           setYearFilter()
                           setSestiereFilter()
                           setStoreFilter()
@@ -1303,7 +1348,7 @@ function setAddLocation() {
 
 function setFlagFilter() {
   const flagFilter = document.querySelector('#flagFilter')
-  flagFilter.innerHTML = '<br><input type="checkbox" id="flaggedbox">'
+  flagFilter.innerHTML = '<input type="checkbox" id="flaggedbox">'
     + '<label for="flaggedbox">Flagged</label>'
 
   const flaggedBox = document.querySelector('#flaggedbox')
@@ -1516,6 +1561,7 @@ window.onload = function () {
         setPopup()
         addLayer()
         setGoToLocation()
+        setGoHome()
         setDownload()
         setAddLocation()
         setFlagFilter()
