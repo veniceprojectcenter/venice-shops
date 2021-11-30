@@ -36,7 +36,11 @@
   </div>
 
   <div class="grid">
-    <div id="map" class="map"></div>
+    <div id="map" class="map">
+      <button id="changeSize">
+        <img class="icons" id="changeSizeImg" src="assets/enlarge.png" />
+      </button>
+    </div>
 
     <div id="filter">
       <h1>Filters</h1>
@@ -44,12 +48,16 @@
       <h2 id="yearFilter">Years Collected</h2>
       <h2 id="sestiereFilter">Sestiere</h2>
       <h2 id="storeFilter">Shop Type</h2>
-      <button class="scrollButton" id="timelapseButton">Cycle years</button>
-      <h1 id=yearDisplay></h1>
+      <h2 id="airbnbFilter">Airbnb</h2>
       <div id='collected'>
         <h2>Items selected:</h2>
         <h2 id="numberDisplay"></h2>
       </div>
+      <div id="cycleButtons">
+        <button class="scrollButton" id="timelapseButton">Cycle Years</button>
+        <button class="scrollButton" id="stopTimelapseButton">Stop Cycling</button>
+      </div>
+      <h1 id=yearDisplay></h1>
     </div>
   </div>
 

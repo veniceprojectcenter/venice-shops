@@ -14,8 +14,10 @@ const uri = "mongodb+srv://mapuser:mapuser@cluster0.0k894.mongodb.net/"
 
 const client = new mongodb.MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 let collection = null;
+let collection2 = null
 
 client.connect(err => {
+  collection2 = client.db("VeniceShops").collection("Airbnb")
   collection = client.db("VeniceShops").collection("MapsFeatures")
 })
 
@@ -37,6 +39,13 @@ app.get("/", function(request, response) {
 
 app.get("/load", function(request, response) {
   collection
+    .find({})
+    .toArray()
+    .then(result => response.json(result));
+})
+
+app.get("/loadairbnb", function(request, response) {
+  collection2
     .find({})
     .toArray()
     .then(result => response.json(result));

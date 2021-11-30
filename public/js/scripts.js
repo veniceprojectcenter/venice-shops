@@ -1,5 +1,7 @@
 let data
 let dataAll
+let airbnbData
+let airbnbDataAll
 
 let centerX = 12.34
 let centerY = 45.436
@@ -19,30 +21,72 @@ let map
 let layer
 
 let abbvPopup = document.querySelector('#abbvPopup')
-const abbvs = { "Cannargeio": "CN", "Castello": "CS", "San Marco": "SM", "Dorsoduro": "DD",
-                "San Polo": "SP", "Santa Croce": "SC", "Giudecca": "GD"}
+const abbvs = {
+  "Cannargeio": "CN", "Castello": "CS", "San Marco": "SM", "Dorsoduro": "DD",
+  "San Polo": "SP", "Santa Croce": "SC", "Giudecca": "GD"
+}
+
+const shopTypes = {
+  'Clothing Stores': ['Clothing', 'Costumes', "Children's Clothing", 'Gloves', 'Mask', "Men's Clothing", 'Shoes',
+    'Undergarments', "Women's Clothing"],
+  'Drug Stores': ['Cosmetics', 'Medical Goods', 'Pharmacy'],
+  'Entertainment': ['Casino', 'Entertainment', 'Movie Theater'],
+  'Food and Beverage': ['Bakery', 'Butcher', 'Candy', 'Coffee', 'Dairy', 'Gelateria', 'Liquor', 'Produce',
+    'Seafood', 'Wine'],
+  'Grocery Stores & Supermarkets': ['General Store', 'Grocery Store'],
+  'Lodging': ['Bed and Breakfast', 'Guest Houses', 'Hotel', 'Hotel with Restaurant', 'Hostel'],
+  'Restaurants & Bars': ['Bar', 'Cafe', 'Fast Food', 'Pizzeria', 'Restaurant'],
+  'Services': ['Apartment Rental', 'Bank', 'Barber', 'Car Rental', 'Computer Services', 'Delivery', 'Dry Cleaner',
+    'Electronics Repair', 'Film Studio', 'Fitness', 'Funeral Services', 'Graphic Design', 'Hair Salon', 'Hospital',
+    'Jewelry Repair', 'Laundromat', 'Leather Repair', 'Library', 'Masseuse', 'Money Transfer', 'Nail Salon',
+    'Perfume', 'Photo Store', 'Photocopy', 'Photographer', 'Post Office', 'Printing', 'Real Estate', 'Repair', 'Spa',
+    'Study Agency', 'Swim', 'Tailor', 'Tattoo and Piercing', 'Transportation', 'Travel Agency', 'Veterinarian',
+    'Warehouse', 'Wedding'],
+  'Specialty Stores': ['Accessories', 'Antiques', 'Art', 'Art Gallery', 'Boat Supplies', 'Books',
+    'Coins and Stamps', 'Computer', 'Electrical Appliances', 'Electronics', 'Exchange', 'Eyewear', 'Fishing',
+    'Florist', 'Furniture', 'Glass', 'Hardware', 'Household Goods', 'Jewelry', 'Knives', 'Leather Goods',
+    'Light Store', 'Luxury', 'Metal Work', 'Music', 'Musical Instruments', 'Newspaper', 'Office Supplies',
+    'Pawn Shop', 'Pet Store', 'Picture Frames', 'Souvenirs', 'Sporting Goods', 'Stationery', 'Tobacco', 'Textiles',
+    'Toys', 'Woodwork', 'Other Retail'],
+  'Other': ['Closed', 'Undefined', 'Radio and Television', 'Stall']
+}
+
+const colors = {
+  "Clothing Stores": "#2E86C1", "Drug Stores": "#2E86C1", "Entertainment": "#8E44AD", 
+  "Food and Beverage": "#F39C12", "Grocery Stores & Supermarkets": "#F39C12", 
+  "Lodging": "#138D75", "Restaurants & Bars": "#F39C12", "Services": "#99A3A4", 
+  "Specialty Stores": "#2E86C1", "Other": "#000000", "airbnb": "#C0392B"
+}
 
 let yearTargets = []
 let sestiereTargets = []
 let storeTargets = []
+let airbnbTargets = []
 
 let timelapsing = false
+let paused = false
+let yearIndex = 0
 let timelapseInterval;
 
 let allYears = []
 let allSestieres = []
+let allAirbnbs = []
 
 let yearOptions = []
 let sestiereOptions = []
 let storesOptions = []
 let sestiereOptions2 = []
 let storesOptions2 = []
+let airbnbOptions = []
+let airbnbOptions2 = []
 
 const yearFilterDefault = document.querySelector('#yearFilter').innerHTML
 const sestiereFilterDefault = document.querySelector('#sestiereFilter').innerHTML
 const storeFilterDefault = document.querySelector('#storeFilter').innerHTML
+const airbnbFilterDefault = document.querySelector('#airbnbFilter').innerHTML
 
 let popupPresent = false
+let radiusStyle = 5
 
 function setBaselines() {
   for (let i = 0; i < data.length; i++) {
@@ -53,6 +97,11 @@ function setBaselines() {
       if (data[i].address_sestiere != "" && !allSestieres.includes(data[i].address_sestiere)) {
         allSestieres.push(data[i].address_sestiere)
       }
+    }
+  }
+  for (let i = 0; i < airbnbData.length; i++) {
+    if (airbnbData[i].year != "" && !allAirbnbs.includes(String(airbnbData[i].year))) {
+      allAirbnbs.push(String(airbnbData[i].year))
     }
   }
 
@@ -73,35 +122,21 @@ function setBaselines() {
     sestiereOptions2.push(sesOpt2)
   }
 
-  const shopTypes = {
-    'Clothing Stores': ['Clothing','Costumes',"Children's Clothing", 'Gloves','Mask',"Men's Clothing",'Shoes',
-      'Undergarments',"Women's Clothing"],
-    'Drug Stores': ['Cosmetics','Medical Goods','Pharmacy'],
-    'Entertainment': ['Casino','Entertainment','Movie Theater'],
-    'Food and Beverage Stores': ['Bakery','Butcher','Candy','Coffee','Dairy','Gelateria','Liquor','Produce',
-      'Seafood','Wine'],
-    'Grocery Stores & Supermarkets': ['General Store','Grocery Store'],
-    'Lodging': ['Bed and Breakfast','Guest Houses','Hotel','Hotel with Restaurant','Hostel'],
-    'Restaurants & Bars': ['Bar','Cafe','Fast Food','Pizzeria','Restaurant'],
-    'Services': ['Apartment Rental','Bank','Barber','Car Rental','Computer Services','Delivery','Dry Cleaner',
-      'Electronics Repair','Film Studio','Fitness','Funeral Services','Graphic Design','Hair Salon','Hospital',
-      'Jewelry Repair','Laundromat','Leather Repair','Library','Masseuse','Money Transfer','Nail Salon',
-      'Perfume','Photo Store','Photocopy','Photographer','Post Office','Printing','Real Estate','Repair','Spa',
-      'Study Agency','Swim','Tailor','Tattoo and Piercing','Transportation','Travel Agency','Veterinarian',
-      'Warehouse','Wedding'],
-    'Specialty Stores': ['Accessories','Antiques','Art','Art Gallery','Boat Supplies','Books',
-      'Coins and Stamps','Computer','Electrical Appliances','Electronics','Exchange','Eyewear','Fishing',
-      'Florist','Furniture','Glass','Hardware','Household Goods','Jewelry','Knives','Leather Goods',
-      'Light Store','Luxury','Metal Work','Music','Musical Instruments','Newspaper','Office Supplies',
-      'Pawn Shop','Pet Store','Picture Frames','Souvenirs','Sporting Goods','Stationery','Tobacco','Textiles',
-      'Toys','Woodwork','Other Retail'],
-    'Other': ['Closed','Undefined','Radio and Television','Stall']
+  let airbnbNames = allAirbnbs.sort().reverse()
+  for (let i = 0; i < airbnbNames.length; i++) {
+    const airOpt = document.createElement('option')
+    airOpt.value = airOpt.text = airbnbNames[i]
+    airbnbOptions.push(airOpt)
+    const airOpt2 = document.createElement('option')
+    airOpt2.value = airOpt2.text = airbnbNames[i]
+    airbnbOptions2.push(airOpt2)
   }
+
   const keys = Object.keys(shopTypes)
-  for (let i = 0; i < keys.length; i++){
+  for (let i = 0; i < keys.length; i++) {
     const shopOptG = document.createElement('optgroup')
     shopOptG.label = keys[i]
-    for (let j = 0; j < shopTypes[keys[i]].length; j++){
+    for (let j = 0; j < shopTypes[keys[i]].length; j++) {
       const shopOpt = document.createElement('option')
       shopOpt.value = shopOpt.text = shopTypes[keys[i]][j]
       shopOptG.appendChild(shopOpt)
@@ -110,7 +145,7 @@ function setBaselines() {
 
     const shopOptG2 = document.createElement('optgroup')
     shopOptG2.label = keys[i]
-    for (let j = 0; j < shopTypes[keys[i]].length; j++){
+    for (let j = 0; j < shopTypes[keys[i]].length; j++) {
       const shopOpt2 = document.createElement('option')
       shopOpt2.value = shopOpt2.text = shopTypes[keys[i]][j]
       shopOptG2.appendChild(shopOpt2)
@@ -121,6 +156,18 @@ function setBaselines() {
 
 function setFeatures() {
   newfeatures = []
+
+  for (let i = 0; i < airbnbData.length; i++){
+    if (airbnbData[i].year !== "") {
+      let next = new ol.Feature({
+        geometry: new ol.geom.Point(ol.proj.fromLonLat([airbnbData[i].lng, airbnbData[i].lat])),
+        year: airbnbData[i].year,
+        type: "airbnb"
+      })
+      newfeatures.push(next)
+    }
+  }
+
   for (let i = 0; i < data.length; i++) {
     if (data[i].info2.length !== 0) {
       let next = new ol.Feature({
@@ -130,12 +177,14 @@ function setFeatures() {
         address_street: data[i]["address_street"],
         address_abbv: abbvs[data[i]["address_sestiere"]] + " " + data[i]["address_num"],
         parent_id: data[i].parent_id,
-        last_name: data[i].info[data[i].info.length-1].store_name,
-        info: data[i].info
+        last_name: data[i].info[data[i].info.length - 1].store_name,
+        info: data[i].info,
+        type: "shop"
       })
       newfeatures.push(next)
     }
   }
+
   const numDisplay = document.querySelector('#numberDisplay')
   numDisplay.innerText = newfeatures.length
 }
@@ -174,10 +223,8 @@ function setMap() {
     })
   });
 
-  addLayer();
-
   map.on('singleclick', function (event) {
-    if (map.hasFeatureAtPixel(event.pixel)) {
+    if (map.hasFeatureAtPixel(event.pixel) && map.getFeaturesAtPixel(event.pixel)[0].A.type === 'shop') {
       popupPresent = true
       abbvPopup.innerText = ''
       let pointInfo = map.getFeaturesAtPixel(event.pixel)[0].A
@@ -190,13 +237,13 @@ function setMap() {
   });
 
   map.on('pointermove', function (event) {
-    if (!popupPresent && map.hasFeatureAtPixel(event.pixel)){
+    if (!popupPresent && map.hasFeatureAtPixel(event.pixel) && map.getFeaturesAtPixel(event.pixel)[0].A.type === 'shop') {
       let pointInfo = map.getFeaturesAtPixel(event.pixel)[0].A
-      if (abbvPopup.innerText !== pointInfo.address){
+      if (abbvPopup.innerText !== pointInfo.address) {
         abbvPopup.style.top = event.originalEvent.pageY + 'px'
         abbvPopup.style.left = event.originalEvent.pageX + 'px'
         if (pointInfo.last_name === '') { abbvPopup.innerText = pointInfo.address_abbv }
-        else { abbvPopup.innerHTML = pointInfo.last_name}
+        else { abbvPopup.innerHTML = pointInfo.last_name }
       }
     }
     else { abbvPopup.innerText = '' }
@@ -238,6 +285,43 @@ function setMap() {
 }
 
 function addLayer() {
+  let colorkeys = Object.keys(colors)
+  let styles = {}
+  for (let i = 0; i < colorkeys.length; i++) {
+    let fill = new ol.style.Fill({
+      color: 'rgba(255,255,255,0.4)'
+    });
+    let stroke = new ol.style.Stroke({
+      color: colors[colorkeys[i]],
+      width: 1.75
+    });
+    styles[colorkeys[i]] = new ol.style.Style({
+      image: new ol.style.Circle({
+        fill: fill,
+        stroke: stroke,
+        radius: radiusStyle
+      }),
+      fill: fill,
+      stroke: stroke
+    })
+  }
+
+  for (let i = 0; i < newfeatures.length; i++){
+    if (newfeatures[i].A.type === "shop"){
+      let category = ""
+      let categories = Object.keys(shopTypes)
+      for (let j = 0; j < categories.length; j++){
+        if (shopTypes[categories[j]].includes(newfeatures[i].A.info[newfeatures[i].A.info.length-1].store_type)) {
+          category = categories[j]
+        }
+      }
+      newfeatures[i].setStyle(styles[category])
+    }
+    else {
+      newfeatures[i].setStyle(styles['airbnb'])
+    }
+  }
+
   layer = new ol.layer.Vector({
     source: new ol.source.Vector({
       features: newfeatures
@@ -319,7 +403,7 @@ function setContent(pointInfo) {
     inputGrid.appendChild(storeInput)
     const clearStore = document.createElement("button")
     clearStore.innerText = "Clear"
-    clearStore.onclick = function () { storeInput.value = "Undefined" }
+    clearStore.onclick = function () { storeInput.value = "Closed" }
     inputGrid.appendChild(clearStore)
 
     const noteLabel = document.createElement("label")
@@ -370,7 +454,7 @@ function setContent(pointInfo) {
       }
       else {
         loadingPopup()
-        if (imageInput.files.length !== 0){
+        if (imageInput.files.length !== 0) {
           const formData = new FormData()
           formData.append('myFile', imageInput.files[0])
           fetch("/upload2", {
@@ -457,6 +541,7 @@ function setContent(pointInfo) {
                             setYearFilter()
                             setSestiereFilter()
                             setStoreFilter()
+                            filterFeatures()
                             return 0
                           })
                           .then(function () {
@@ -538,6 +623,7 @@ function setContent(pointInfo) {
                     setYearFilter()
                     setSestiereFilter()
                     setStoreFilter()
+                    filterFeatures()
                     return 0
                   })
                   .then(function () {
@@ -760,6 +846,7 @@ function setContent(pointInfo) {
                         setYearFilter()
                         setSestiereFilter()
                         setStoreFilter()
+                        filterFeatures()
                         return 0
                       })
                       .then(function () {
@@ -837,13 +924,14 @@ function setContent(pointInfo) {
               setSestiereFilter()
               setStoreFilter()
               removePopup()
+              filterFeatures()
               return 0
             })
         })
         return 0
       })
   }
-  
+
   const popupGrid = document.createElement("div")
   popupGrid.classList.add("popupGrid")
 
@@ -895,7 +983,7 @@ function setContent(pointInfo) {
     pastButton.style.backgroundColor = "grey";
     pastButton.disabled = true
   }
-  else{ pastButton.style.backgroundColor = "gainsboro" }
+  else { pastButton.style.backgroundColor = "gainsboro" }
   content.appendChild(pastButton)
 
   const futureButton = document.createElement("button");
@@ -912,16 +1000,16 @@ function setContent(pointInfo) {
     futureButton.style.backgroundColor = "grey";
     futureButton.disabled = true
   }
-  else{ futureButton.style.backgroundColor = "gainsboro" }
+  else { futureButton.style.backgroundColor = "gainsboro" }
   content.appendChild(futureButton)
 }
 
-function gotoPosition(position){ 
+function gotoPosition(position) {
   const lat = position.coords.latitude
   const lng = position.coords.longitude
 
-  if (lng < 12.2915 || lng > 12.379 || lat > 45.453 || lat < 45.425) { 
-    alert("Invalid Coordinates") 
+  if (lng < 12.2915 || lng > 12.379 || lat > 45.453 || lat < 45.425) {
+    alert("Invalid Coordinates")
   }
   else {
     map.getView().setCenter(ol.proj.transform([lng, lat], 'EPSG:4326', 'EPSG:3857'));
@@ -930,7 +1018,7 @@ function gotoPosition(position){
 }
 
 function showError(error) {
-  switch(error.code){
+  switch (error.code) {
     case error.PERMISSION_DENIED:
       alert("User denied the request for Geolocation.")
       break;
@@ -950,9 +1038,9 @@ function setGoToLocation() {
   const gotoLocation = document.querySelector('#gotoLocation')
   gotoLocation.onclick = function () {
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(gotoPosition,showError);
+      navigator.geolocation.getCurrentPosition(gotoPosition, showError);
     }
-    else{
+    else {
       alert('Geolocation not supported')
     }
   }
@@ -972,9 +1060,9 @@ function setDownload() {
     var element = document.createElement('a');
 
     let csvData = 'ID, Latitude, Longitude, Name, Number, Address, Sestiere, Year, Type, Closed?, Tourist?, Artisan?, Lodging?\n'
-    for (let i = 0; i < data.length; i++){
-      if (data[i].info2.length !== 0){
-        for (let j = 0; j < data[i].info.length; j++){
+    for (let i = 0; i < data.length; i++) {
+      if (data[i].info2.length !== 0) {
+        for (let j = 0; j < data[i].info.length; j++) {
           const thisInfo = data[i].info[j]
           csvData = csvData + data[i].parent_id + ', '
             + data[i].lat + ', '
@@ -987,21 +1075,21 @@ function setDownload() {
             + thisInfo.store_type + ', '
 
           if (j === data[i].info.length - 1) { csvData = csvData + 'N/A, ' }
-          else if (thisInfo.store_type === data[i].info[j+1].store_type && thisInfo.store_type !== 'Closed') {
+          else if (thisInfo.store_type === data[i].info[j + 1].store_type && thisInfo.store_type !== 'Closed') {
             csvData = csvData + 'False' + ', '
           }
-          else { csvData = csvData + 'True' + ', '}
+          else { csvData = csvData + 'True' + ', ' }
 
           const touristTypes = ['Mask', 'Souvenirs']
           const artisanTypes = ['Mask', 'Bakery', 'Butcher', 'Pizzeria', 'Barber', 'Hair Salon', 'Jewelry Repair',
-                                'Leather Repair', 'Masseuse', 'Nail Salon', 'Spa', 'Tailor', 'Tattoo and Piercing',
-                                'Wedding', 'Antiques', 'Florist', 'Glass', 'Jewelry', 'Knives', 'Leather Goods',
-                                'Pawn Shop', 'Woodwork', 'Picture Frames']
+            'Leather Repair', 'Masseuse', 'Nail Salon', 'Spa', 'Tailor', 'Tattoo and Piercing',
+            'Wedding', 'Antiques', 'Florist', 'Glass', 'Jewelry', 'Knives', 'Leather Goods',
+            'Pawn Shop', 'Woodwork', 'Picture Frames']
           const lodgingTypes = ['Bed and Breakfast', 'Guest Houses', 'Hotel', 'Hotel with Restaurant', 'Hostel']
           csvData = csvData + (touristTypes.includes(thisInfo.store_type) ? 'True' : 'False') + ', '
-          + (artisanTypes.includes(thisInfo.store_type) ? 'True' : 'False') + ', '
-          + (lodgingTypes.includes(thisInfo.store_type) ? 'True' : 'False') + '\n'
-        } 
+            + (artisanTypes.includes(thisInfo.store_type) ? 'True' : 'False') + ', '
+            + (lodgingTypes.includes(thisInfo.store_type) ? 'True' : 'False') + '\n'
+        }
       }
     }
 
@@ -1108,7 +1196,7 @@ function setAddLocation() {
         lngInput.value = coords[0]
 
         map.on('singleclick', function (event) {
-          if (map.hasFeatureAtPixel(event.pixel) === true) {
+          if (map.hasFeatureAtPixel(event.pixel) && map.getFeaturesAtPixel(event.pixel)[0].A.type === 'shop') {
             popupPresent = true
             abbvPopup.innerText = ''
             let pointInfo = map.getFeaturesAtPixel(event.pixel)[0].A
@@ -1333,6 +1421,7 @@ function setAddLocation() {
                           setSestiereFilter()
                           setStoreFilter()
                           removePopup()
+                          filterFeatures()
                           return 0
                         })
                     })
@@ -1415,53 +1504,113 @@ function setStoreFilter() {
   });
 }
 
+function setAirbnbFilter() {
+  const airbnbFilter = document.querySelector('#airbnbFilter')
+  airbnbFilter.innerHTML = airbnbFilterDefault
+
+  const airbnbSelect = document.createElement('select')
+  airbnbSelect.multiple = true
+  airbnbSelect.id = 'airbnbSelect'
+  airbnbSelect.onchange = filterFeatures
+
+  for (var i = 0; i < airbnbOptions.length; i++) {
+    airbnbSelect.appendChild(airbnbOptions[i]);
+  }
+
+  airbnbFilter.appendChild(airbnbSelect)
+
+  const airbnbSlimSelect = new SlimSelect({
+    select: '#airbnbSelect',
+  });
+}
+
 function setTimelapse() {
   const timelapseButton = document.querySelector('#timelapseButton')
   timelapseButton.onclick = startTimelapse
+  timelapseButton.style.backgroundColor = "gainsboro"
+
+  const stopTimelapseButton = document.querySelector('#stopTimelapseButton')
+  stopTimelapseButton.onclick = stopTimelapse
+  stopTimelapseButton.style.backgroundColor = "grey"
+  stopTimelapseButton.disabled = true
 }
 
 function startTimelapse() {
-  timelapsing = true
   const timelapseButton = document.querySelector('#timelapseButton')
-  timelapseButton.innerText = 'Stop Cycling'
-  timelapseButton.onclick = stopTimelapse
-  const yearDisplay = document.querySelector('#yearDisplay')
-
-  const yearSelecting = document.querySelector('#yearSelect')
-  let allYearTargets = []
-  for (let i = yearSelecting.selectedOptions.length - 1; i >= 0; i--){
-    allYearTargets.push(yearSelecting.selectedOptions[i].value)
+  if (paused) {
+    paused = false
+    timelapseButton.innerText = 'Resume Cycle'
+    clearInterval(timelapseInterval)
   }
+  else {
+    timelapsing = true
+    paused = true
+    timelapseButton.innerText = 'Pause Cycle'
+    const yearDisplay = document.querySelector('#yearDisplay')
 
-  if (allYearTargets.length === 0){
-    allYearTargets = allYears.sort()
-  }
+    const stopTimelapseButton = document.querySelector('#stopTimelapseButton')
+    stopTimelapseButton.style.backgroundColor = "gainsboro"
+    stopTimelapseButton.disabled = false
 
-  let yearIndex = 0
-  yearTargets = allYearTargets[yearIndex]
-  filterFeatures()
-  yearDisplay.innerText = allYearTargets[yearIndex]
-  yearIndex = yearIndex + 1
-  if (yearIndex === allYearTargets.length) { yearIndex = 0 }
-  
-  timelapseInterval = setInterval(function () {
+    const yearSelecting = document.querySelector('#yearSelect')
+    let allYearTargets = []
+    for (let i = yearSelecting.selectedOptions.length - 1; i >= 0; i--) {
+      allYearTargets.push(yearSelecting.selectedOptions[i].value)
+    }
+
+    if (allYearTargets.length === 0) {
+      allYearTargets = allYears.sort()
+    }
+
     yearTargets = allYearTargets[yearIndex]
     filterFeatures()
     yearDisplay.innerText = allYearTargets[yearIndex]
     yearIndex = yearIndex + 1
     if (yearIndex === allYearTargets.length) { yearIndex = 0 }
-  }, 1000)
+
+    timelapseInterval = setInterval(function () {
+      yearTargets = allYearTargets[yearIndex]
+      filterFeatures()
+      yearDisplay.innerText = allYearTargets[yearIndex]
+      yearIndex = yearIndex + 1
+      if (yearIndex === allYearTargets.length) { yearIndex = 0 }
+    }, 1000)
+  }
 }
 
 function stopTimelapse() {
+  yearIndex = 0
   timelapsing = false
+  paused = false
   clearInterval(timelapseInterval)
   const timelapseButton = document.querySelector('#timelapseButton')
-  timelapseButton.innerText = 'Cycle years'
+  timelapseButton.innerText = 'Cycle Years'
   timelapseButton.onclick = startTimelapse
+
   const yearDisplay = document.querySelector('#yearDisplay')
   yearDisplay.innerText = ''
+
+  const stopTimelapseButton = document.querySelector('#stopTimelapseButton')
+  stopTimelapseButton.style.backgroundColor = "grey"
+  stopTimelapseButton.disabled = true
+
   filterFeatures()
+}
+
+function setChangeSize() {
+  const changeSizeButton = document.querySelector('#changeSize')
+  const changeSizeIcon = document.querySelector('#changeSizeImg')
+  changeSizeButton.onclick = function () {
+    if (radiusStyle === 5) {
+      changeSizeIcon.src = "./assets/reduce.png"
+      radiusStyle = 15
+    }
+    else {
+      changeSizeIcon.src = "./assets/enlarge.png"
+      radiusStyle = 5
+    }
+    filterFeatures()
+  }
 }
 
 function filterFeatures() {
@@ -1470,25 +1619,32 @@ function filterFeatures() {
   if (!timelapsing) {
     const yearSelecting = document.querySelector('#yearSelect')
     yearTargets = []
-    for (let i = 0; i < yearSelecting.selectedOptions.length; i++){
+    for (let i = 0; i < yearSelecting.selectedOptions.length; i++) {
       yearTargets.push(yearSelecting.selectedOptions[i].value)
     }
   }
 
   const sestiereSelecting = document.querySelector('#sestiereSelect')
   sestiereTargets = []
-  for (let i = 0; i < sestiereSelecting.selectedOptions.length; i++){
+  for (let i = 0; i < sestiereSelecting.selectedOptions.length; i++) {
     sestiereTargets.push(sestiereSelecting.selectedOptions[i].value)
   }
 
   const storeSelecting = document.querySelector('#storeSelect')
   storeTargets = []
-  for (let i = 0; i < storeSelecting.selectedOptions.length; i++){
+  for (let i = 0; i < storeSelecting.selectedOptions.length; i++) {
     storeTargets.push(storeSelecting.selectedOptions[i].value)
   }
 
+  const airbnbSelecting = document.querySelector('#airbnbSelect')
+  airbnbTargets = []
+  for (let i = 0; i < airbnbSelecting.selectedOptions.length; i++) {
+    airbnbTargets.push(airbnbSelecting.selectedOptions[i].value)
+  }
+
   data = JSON.parse(JSON.stringify(dataAll))
-  
+  airbnbData = JSON.parse(JSON.stringify(airbnbDataAll))
+
   let flagged = document.querySelector('#flaggedbox')
   if (flagged.checked) {
     for (let i = 0; i < data.length; i++) {
@@ -1504,13 +1660,18 @@ function filterFeatures() {
   if (sestiereTargets.length !== 0) {
     for (let i = 0; i < data.length; i++) {
       if (!sestiereTargets.includes(data[i].address_sestiere)) {
-        data[i].info2 = [] 
+        data[i].info2 = []
       }
     }
   }
   if (storeTargets.length !== 0) {
     for (let i = 0; i < data.length; i++) {
       data[i].info2 = data[i].info2.filter(item => storeTargets.includes(item.store_type))
+    }
+  }
+  for (let i = 0; i < airbnbData.length; i++) {
+    if (!airbnbTargets.includes(airbnbData[i].year)) {
+      airbnbData[i].year = ""
     }
   }
 
@@ -1556,20 +1717,36 @@ window.onload = function () {
         return data
       })
       .then(function (data) {
-        setBaselines()
-        setFeatures()
-        setPopup()
-        addLayer()
-        setGoToLocation()
-        setGoHome()
-        setDownload()
-        setAddLocation()
-        setFlagFilter()
-        setYearFilter()
-        setSestiereFilter()
-        setStoreFilter()
-        setTimelapse()
-        return 0
+        fetch("/loadairbnb", {
+          method: "GET"
+        })
+          .then(function (response) {
+            return response.json()
+          })
+          .then(function (json) {
+            airbnbData = json
+            airbnbDataAll = JSON.parse(JSON.stringify(airbnbData))
+            return 0
+          })
+          .then(function (data) {
+            setBaselines()
+            setFeatures()
+            setPopup()
+            addLayer()
+            setGoToLocation()
+            setGoHome()
+            setDownload()
+            setAddLocation()
+            setFlagFilter()
+            setYearFilter()
+            setSestiereFilter()
+            setStoreFilter()
+            setAirbnbFilter()
+            setTimelapse()
+            setChangeSize()
+            filterFeatures()
+            return 0
+          })
       })
   })
 }

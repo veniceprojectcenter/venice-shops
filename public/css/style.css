@@ -61,6 +61,7 @@
 .map {
     grid-column: 1 / -2;
     z-index: 1;
+    position: relative;
 }
 
 #popup-content {
@@ -156,10 +157,6 @@ h1, h2, h3{
     bottom: 20px;
 }
 
-#timelapseButton {
-    margin-left: 30%;
-}
-
 #abbvPopup {
     position: absolute;
     z-index: 3;
@@ -170,10 +167,20 @@ h1, h2, h3{
     transform: scale(1.7);
 }
 
-input {
-    border-radius: 0;
-}
-
 #yearDisplay {
     height: 30px;
+}
+
+#cycleButtons {
+    text-align: center;
+}
+
+#changeSize {
+    position: absolute;
+    z-index: 2;
+    top: 10px;
+    right: 20px;
+    width: 44px;
+    height: 44px;
+    padding-left: 0%;
 }
