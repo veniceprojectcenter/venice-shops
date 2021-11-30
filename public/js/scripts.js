@@ -260,7 +260,7 @@ function setMap() {
     if (mapX < 12.2915) { mapX = 12.2915 }
     if (mapX > 12.379) { mapX = 12.379 }
     if (mapY > 45.453) { mapY = 45.453 }
-    if (mapY < 45.425) { mapY = 45.415 }
+    if (mapY < 45.405) { mapY = 45.405 }
 
     map.getView().setCenter(ol.proj.transform([mapX, mapY], 'EPSG:4326', 'EPSG:3857'));
 
@@ -268,8 +268,8 @@ function setMap() {
       map.getView().setZoom(14.5)
       map.getView().setCenter(ol.proj.transform([centerX, centerY], 'EPSG:4326', 'EPSG:3857'));
     }
-    if (map.getView().getZoom() > 21) {
-      map.getView().setZoom(21)
+    if (map.getView().getZoom() > 25) {
+      map.getView().setZoom(25)
       map.getView().setCenter(ol.proj.transform([mapX, mapY], 'EPSG:4326', 'EPSG:3857'));
     }
   });
