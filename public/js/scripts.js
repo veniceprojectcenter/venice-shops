@@ -260,7 +260,7 @@ function setMap() {
     if (mapX < 12.2915) { mapX = 12.2915 }
     if (mapX > 12.379) { mapX = 12.379 }
     if (mapY > 45.453) { mapY = 45.453 }
-    if (mapY < 45.405) { mapY = 45.405 }
+    if (mapY < 45.412) { mapY = 45.412 }
 
     map.getView().setCenter(ol.proj.transform([mapX, mapY], 'EPSG:4326', 'EPSG:3857'));
 

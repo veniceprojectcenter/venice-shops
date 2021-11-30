@@ -184,3 +184,8 @@ h1, h2, h3{
     height: 44px;
     padding-left: 0%;
 }
+
+button {
+    -webkit-appearance: none;
+    padding-top: 0px;
+}
