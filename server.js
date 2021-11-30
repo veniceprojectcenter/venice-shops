@@ -135,11 +135,7 @@ app.post("/edit", function(request, response) {
 
 app.post("/delete", function(request, response) {
   const newInfo = request.body.info
-  for (let i = 0; i < newInfo.length; i++){
-    if (newInfo[i].year_collected === request.body.year){
-      newInfo[i].deleted = true
-    }
-  }
+  newInfo[request.body.index].deleted = true
   collection.updateOne(
     { _id: mongodb.ObjectId(request.body._id) },
     { $set: { info: newInfo }}

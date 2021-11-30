@@ -1803,6 +1803,7 @@ var Slim = (function () {
                     optgroupLabel.classList.add(this_1.main.config.optgroupLabelSelectable);
                 }
                 optgroupLabel.innerHTML = item.label;
+
                 optgroupEl_1.appendChild(optgroupLabel);
                 var options = item.options;
                 if (options) {
@@ -1899,6 +1900,7 @@ var Slim = (function () {
                         master.main.set('');
                     }
                 }
+                master.main.close();
             }
             else {
                 if (data.disabled || data.selected) {

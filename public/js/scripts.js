@@ -100,8 +100,10 @@ function setBaselines() {
     }
   }
   for (let i = 0; i < airbnbData.length; i++) {
-    if (airbnbData[i].year != "" && !allAirbnbs.includes(String(airbnbData[i].year))) {
-      allAirbnbs.push(String(airbnbData[i].year))
+    for (let j = 0; j < airbnbData[i].years.length; j++){
+      if (!allAirbnbs.includes(String(airbnbData[i].years[j]))) {
+        allAirbnbs.push(String(airbnbData[i].years[j]))
+      }
     }
   }
 
@@ -158,10 +160,11 @@ function setFeatures() {
   newfeatures = []
 
   for (let i = 0; i < airbnbData.length; i++){
-    if (airbnbData[i].year !== "") {
+    if (airbnbData[i].years.length > 0) {
       let next = new ol.Feature({
         geometry: new ol.geom.Point(ol.proj.fromLonLat([airbnbData[i].lng, airbnbData[i].lat])),
-        year: airbnbData[i].year,
+        years: airbnbData[i].years,
+        sestiere: airbnbData[i].address_sestiere,
         type: "airbnb"
       })
       newfeatures.push(next)
@@ -186,7 +189,13 @@ function setFeatures() {
   }
 
   const numDisplay = document.querySelector('#numberDisplay')
-  numDisplay.innerText = newfeatures.length
+  const airbnbNumDisplay = document.querySelector('#airbnbNumberDisplay')
+  let numcount = 0
+  for (let i = 0; i < newfeatures.length; i++) {
+    if (newfeatures[i].A.type === "shop") { numcount = numcount + 1 }
+  }
+  numDisplay.innerText = numcount
+  airbnbNumDisplay.innerText = newfeatures.length - numcount
 }
 
 function removePopup() {
@@ -872,10 +881,10 @@ function setContent(pointInfo) {
   deleteButton.innerHTML = '<img class="icons" src="./assets/trash.png"/>'
   deleteButton.onclick = function () {
     loadingPopup()
-    addedJSON = {
+    const addedJSON = {
       _id: pointInfo._id,
       info: information,
-      year: pointInfo.year_collected
+      index: popupIndex
     }
     fetch("/delete", {
       method: "POST",
@@ -963,11 +972,19 @@ function setContent(pointInfo) {
     displayedInfo.innerHTML = '<h1>' + currInfo.address + '</h1>'
   }
   displayedInfo.innerHTML = displayedInfo.innerHTML
-    + '<img src="' + currInfo.image_url + '" width="200px" height="200px">'
+    + '<img src="' + currInfo.image_url + '" id="oldImagePreview" width="200px" height="200px">'
     + '<h3>' + currInfo.address_street + '</h3>'
     + '<h3>' + currInfo.store_type + '</h3>'
     + '<p>' + currInfo.note + '</p>'
-  content.appendChild(displayedInfo)
+  
+  content.appendChild(displayedInfo)  
+  
+  const oldImagePreview = document.querySelector('#oldImagePreview')
+  oldImagePreview.onclick = function () {
+    if(currInfo.image_url.length > 0) {
+    window.open(currInfo.image_url.substring(0, currInfo.image_url.length - 16), '_blank');
+    }
+  }
 
   const pastButton = document.createElement("button");
   pastButton.innerText = "Previous Entry";
@@ -1501,6 +1518,10 @@ function setStoreFilter() {
 
   const storeSlimSelect = new SlimSelect({
     select: '#storeSelect',
+    selectByGroup: true,
+    allowDeselectOption: true,
+    allowDeselect: true,
+    closeOnSelect: true
   });
 }
 
@@ -1663,6 +1684,11 @@ function filterFeatures() {
         data[i].info2 = []
       }
     }
+    for (let i = 0; i < airbnbData.length; i++) {
+      if (!sestiereTargets.includes(airbnbData[i].address_sestiere)) {
+        airbnbData[i].years = []
+      }
+    }
   }
   if (storeTargets.length !== 0) {
     for (let i = 0; i < data.length; i++) {
@@ -1670,9 +1696,14 @@ function filterFeatures() {
     }
   }
   for (let i = 0; i < airbnbData.length; i++) {
-    if (!airbnbTargets.includes(airbnbData[i].year)) {
-      airbnbData[i].year = ""
-    }
+    let found = false;
+    for (let j = 0; j < airbnbData[i].years.length; j++) {
+      if (airbnbTargets.indexOf(airbnbData[i].years[j]) !== -1) {
+        found = true;
+        break;
+      }
+    } 
+    if (!found) { airbnbData[i].years = [] }
   }
 
   map.removeLayer(layer)
