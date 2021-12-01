@@ -22,7 +22,7 @@ let layer
 
 let abbvPopup = document.querySelector('#abbvPopup')
 const abbvs = {
-  "Cannargeio": "CN", "Castello": "CS", "San Marco": "SM", "Dorsoduro": "DD",
+  "Cannaregio": "CN", "Castello": "CS", "San Marco": "SM", "Dorsoduro": "DD",
   "San Polo": "SP", "Santa Croce": "SC", "Giudecca": "GD"
 }
 
@@ -308,13 +308,31 @@ function addLayer() {
       image: new ol.style.Circle({
         fill: fill,
         stroke: stroke,
+        radius: (colorkeys[i] !== "airbnb") ? radiusStyle : radiusStyle/2
+      }),
+      fill: fill,
+      stroke: stroke
+    })
+  }
+  for (let i = 0; i < colorkeys.length; i++) {
+    let fill = new ol.style.Fill({
+      color: colors[colorkeys[i]]
+    });
+    fill.setColor(fill.getColor() + '80')
+    let stroke = new ol.style.Stroke({
+      color: colors[colorkeys[i]],
+      width: 1.75
+    });
+    styles[colorkeys[i] + 'new'] = new ol.style.Style({
+      image: new ol.style.Circle({
+        fill: fill,
+        stroke: stroke,
         radius: radiusStyle
       }),
       fill: fill,
       stroke: stroke
     })
   }
-
   for (let i = 0; i < newfeatures.length; i++){
     if (newfeatures[i].A.type === "shop"){
       let category = ""
@@ -322,6 +340,9 @@ function addLayer() {
       for (let j = 0; j < categories.length; j++){
         if (shopTypes[categories[j]].includes(newfeatures[i].A.info[newfeatures[i].A.info.length-1].store_type)) {
           category = categories[j]
+          if (newfeatures[i].A.info[newfeatures[i].A.info.length-1].year_collected === parseInt(allYears[0])) {
+            category = category + "new"
+          }
         }
       }
       newfeatures[i].setStyle(styles[category])
@@ -718,7 +739,7 @@ function setContent(pointInfo) {
     inputGrid.appendChild(storeInput)
     const clearStore = document.createElement("button")
     clearStore.innerText = "Clear"
-    clearStore.onclick = function () { storeInput.value = "Undefined" }
+    clearStore.onclick = function () { storeInput.value = "Closed" }
     inputGrid.appendChild(clearStore)
 
     const noteLabel = document.createElement("label")
@@ -1076,7 +1097,7 @@ function setDownload() {
   downloadButton.onclick = function () {
     var element = document.createElement('a');
 
-    let csvData = 'ID, Latitude, Longitude, Name, Number, Address, Sestiere, Year, Type, Closed?, Tourist?, Artisan?, Lodging?\n'
+    let csvData = 'ID, Latitude, Longitude, Name, Number, Address, Sestiere, Year, Type, Closed?, New?, Tourist?, Artisan?, Lodging?\n'
     for (let i = 0; i < data.length; i++) {
       if (data[i].info2.length !== 0) {
         for (let j = 0; j < data[i].info.length; j++) {
@@ -1093,9 +1114,16 @@ function setDownload() {
 
           if (j === data[i].info.length - 1) { csvData = csvData + 'N/A, ' }
           else if (thisInfo.store_type === data[i].info[j + 1].store_type && thisInfo.store_type !== 'Closed') {
-            csvData = csvData + 'False' + ', '
+            csvData = csvData + 'False, '
           }
-          else { csvData = csvData + 'True' + ', ' }
+          else { csvData = csvData + 'True, ' }
+
+          if (j === 0 || (data[i].info[j-1].store_type !== thisInfo.store_type) && thisInfo.store_type !== 'Closed') { 
+            csvData = csvData + 'True, ' 
+          }
+          else {
+            csvData = csvData + 'False, '
+          }
 
           const touristTypes = ['Mask', 'Souvenirs']
           const artisanTypes = ['Mask', 'Bakery', 'Butcher', 'Pizzeria', 'Barber', 'Hair Salon', 'Jewelry Repair',
@@ -1290,7 +1318,7 @@ function setAddLocation() {
     inputGrid2.appendChild(storeInput)
     const clearStore = document.createElement("button")
     clearStore.innerText = "Clear"
-    clearStore.onclick = function () { storeInput.value = "Undefined" }
+    clearStore.onclick = function () { storeInput.value = "Closed" }
     inputGrid2.appendChild(clearStore)
 
     const noteLabel = document.createElement("label")
@@ -1452,13 +1480,30 @@ function setAddLocation() {
   }
 }
 
-function setFlagFilter() {
+function setCheckboxes() {
   const flagFilter = document.querySelector('#flagFilter')
-  flagFilter.innerHTML = '<input type="checkbox" id="flaggedbox">'
+  flagFilter.innerHTML = '<input class="checkbox" type="checkbox" id="flaggedbox">'
     + '<label for="flaggedbox">Flagged</label>'
-
   const flaggedBox = document.querySelector('#flaggedbox')
   flaggedBox.addEventListener("change", filterFeatures)
+
+  const openFilter = document.querySelector('#openFilter')
+  openFilter.innerHTML = '<input class="checkbox" type="checkbox" id="openbox">'
+    + '<label for="openbox">Open Only</label>'
+  const openBox = document.querySelector('#openbox')
+  openBox.addEventListener("change", filterFeatures)
+
+  const newFilter = document.querySelector('#newFilter')
+  newFilter.innerHTML = '<input class="checkbox" type="checkbox" id="newbox">'
+    + '<label for="newbox">New Only</label>'
+  const newBox = document.querySelector('#newbox')
+  newBox.addEventListener("change", filterFeatures)
+
+  const layerFilter = document.querySelector('#layerFilter')
+  layerFilter.innerHTML = '<input class="checkbox" type="checkbox" id="layerbox">'
+    + '<label for="layerbox">Shops & Airbnbs</label>'
+  const layerBox = document.querySelector('#layerbox')
+  layerBox.addEventListener("change", filterFeatures)
 }
 
 function setYearFilter() {
@@ -1478,6 +1523,10 @@ function setYearFilter() {
 
   const yearSlimSelect = new SlimSelect({
     select: '#yearSelect',
+    allowDeselectOption: true,
+    allowDeselect: true,
+    closeOnSelect: true,
+    placeholderText: "Add Filters"
   });
 }
 
@@ -1498,6 +1547,10 @@ function setSestiereFilter() {
 
   const sestiereSlimSelect = new SlimSelect({
     select: '#sestiereSelect',
+    allowDeselectOption: true,
+    allowDeselect: true,
+    closeOnSelect: true,
+    placeholderText: "Add Filters"
   });
 }
 
@@ -1521,7 +1574,8 @@ function setStoreFilter() {
     selectByGroup: true,
     allowDeselectOption: true,
     allowDeselect: true,
-    closeOnSelect: true
+    closeOnSelect: true,
+    placeholderText: "Add Filters"
   });
 }
 
@@ -1542,6 +1596,10 @@ function setAirbnbFilter() {
 
   const airbnbSlimSelect = new SlimSelect({
     select: '#airbnbSelect',
+    allowDeselectOption: true,
+    allowDeselect: true,
+    closeOnSelect: true,
+    placeholderText: "Add Layers"
   });
 }
 
@@ -1673,6 +1731,24 @@ function filterFeatures() {
     }
   }
 
+  let openOnly = document.querySelector('#openbox')
+  if (openOnly.checked) {
+    for (let i = 0; i < data.length; i++) {
+      if (data[i].info2.length !== 0 && data[i].info2[data[i].info2.length-1].store_type === 'Closed') {
+        data[i].info2 = []
+      }
+    }
+  }
+
+  let newOnly = document.querySelector('#newbox')
+  if (newOnly.checked) {
+    for (let i = 0; i < data.length; i++) { 
+      if (data[i].info.length !== 1 || data[i].info[0].year_collected !== parseInt(allYears[0])) {
+        data[i].info2 = []
+      }
+    }
+  }
+
   if (yearTargets.length !== 0) {
     for (let i = 0; i < data.length; i++) {
       data[i].info2 = data[i].info2.filter(item => yearTargets.includes(String(item.year_collected)))
@@ -1768,7 +1844,7 @@ window.onload = function () {
             setGoHome()
             setDownload()
             setAddLocation()
-            setFlagFilter()
+            setCheckboxes()
             setYearFilter()
             setSestiereFilter()
             setStoreFilter()

@@ -39,6 +39,11 @@
     font-size: large;
 }
 
+.checkboxGrid {
+    display: grid;
+    grid-template-columns: 50% 50%;
+}
+
 .col1 {
     grid-column: 1;
     margin-top: auto;
@@ -163,7 +168,7 @@ h1, h2, h3{
     z-index: 3;
 }
 
-#flaggedbox {
+.checkbox {
     margin-right: 15px;
     transform: scale(1.7);
 }
