@@ -54,7 +54,7 @@ const shopTypes = {
 const colors = {
   "Clothing Stores": "#2E86C1", "Drug Stores": "#2E86C1", "Entertainment": "#8E44AD", 
   "Food and Beverage": "#F39C12", "Grocery Stores & Supermarkets": "#F39C12", 
-  "Lodging": "#138D75", "Restaurants & Bars": "#F39C12", "Services": "#99A3A4", 
+  "Lodging": "#378805", "Restaurants & Bars": "#F39C12", "Services": "#99A3A4", 
   "Specialty Stores": "#2E86C1", "Other": "#000000", "airbnb": "#C0392B"
 }
 
@@ -1097,7 +1097,7 @@ function setDownload() {
   downloadButton.onclick = function () {
     var element = document.createElement('a');
 
-    let csvData = 'ID, Latitude, Longitude, Name, Number, Address, Sestiere, Year, Type, Closed?, New?, Tourist?, Artisan?, Lodging?\n'
+    let csvData = 'ID, Latitude, Longitude, Name, Number, Address, Sestiere, Year, Type, Closed?, Changed?, First?, Tourist?, Artisan?, Lodging?\n'
     for (let i = 0; i < data.length; i++) {
       if (data[i].info2.length !== 0) {
         for (let j = 0; j < data[i].info.length; j++) {
@@ -1118,14 +1118,15 @@ function setDownload() {
           }
           else { csvData = csvData + 'True, ' }
 
-          if (j === 0 || (data[i].info[j-1].store_type !== thisInfo.store_type) && thisInfo.store_type !== 'Closed') { 
+          if (j !== 0 && data[i].info[j-1].store_type !== thisInfo.store_type) { 
             csvData = csvData + 'True, ' 
           }
-          else {
-            csvData = csvData + 'False, '
-          }
+          else { csvData = csvData + 'False, ' }
 
-          const touristTypes = ['Mask', 'Souvenirs']
+          if (j === 0) { csvData = csvData + 'True, ' }
+          else { csvData = csvData + 'False, ' }
+
+          const touristTypes = ['Mask', 'Souvenirs', 'Luxury', 'Glass', 'Jewelry', 'Antiques', ]
           const artisanTypes = ['Mask', 'Bakery', 'Butcher', 'Pizzeria', 'Barber', 'Hair Salon', 'Jewelry Repair',
             'Leather Repair', 'Masseuse', 'Nail Salon', 'Spa', 'Tailor', 'Tattoo and Piercing',
             'Wedding', 'Antiques', 'Florist', 'Glass', 'Jewelry', 'Knives', 'Leather Goods',
@@ -1481,29 +1482,35 @@ function setAddLocation() {
 }
 
 function setCheckboxes() {
+  const layerFilter = document.querySelector('#layerFilter')
+  layerFilter.innerHTML = '<input class="checkbox" type="checkbox" id="layerbox">'
+    + '<label for="layerbox">Layer Shops & Airbnbs</label>'
+  const layerBox = document.querySelector('#layerbox')
+  layerBox.addEventListener("change", filterFeatures)
+
   const flagFilter = document.querySelector('#flagFilter')
   flagFilter.innerHTML = '<input class="checkbox" type="checkbox" id="flaggedbox">'
     + '<label for="flaggedbox">Flagged</label>'
   const flaggedBox = document.querySelector('#flaggedbox')
   flaggedBox.addEventListener("change", filterFeatures)
 
+  const unflagFilter = document.querySelector('#unflagFilter')
+  unflagFilter.innerHTML = '<input class="checkbox" type="checkbox" id="unflaggedbox">'
+    + '<label for="unflaggedbox">Unflagged</label>'
+  const unflaggedBox = document.querySelector('#unflaggedbox')
+  unflaggedBox.addEventListener("change", filterFeatures)
+
   const openFilter = document.querySelector('#openFilter')
   openFilter.innerHTML = '<input class="checkbox" type="checkbox" id="openbox">'
-    + '<label for="openbox">Open Only</label>'
+    + '<label for="openbox">Open</label>'
   const openBox = document.querySelector('#openbox')
   openBox.addEventListener("change", filterFeatures)
 
   const newFilter = document.querySelector('#newFilter')
   newFilter.innerHTML = '<input class="checkbox" type="checkbox" id="newbox">'
-    + '<label for="newbox">New Only</label>'
+    + '<label for="newbox">New</label>'
   const newBox = document.querySelector('#newbox')
   newBox.addEventListener("change", filterFeatures)
-
-  const layerFilter = document.querySelector('#layerFilter')
-  layerFilter.innerHTML = '<input class="checkbox" type="checkbox" id="layerbox">'
-    + '<label for="layerbox">Shops & Airbnbs</label>'
-  const layerBox = document.querySelector('#layerbox')
-  layerBox.addEventListener("change", filterFeatures)
 }
 
 function setYearFilter() {
@@ -1526,7 +1533,7 @@ function setYearFilter() {
     allowDeselectOption: true,
     allowDeselect: true,
     closeOnSelect: true,
-    placeholderText: "Add Filters"
+    placeholder: "Add Filters"
   });
 }
 
@@ -1550,7 +1557,7 @@ function setSestiereFilter() {
     allowDeselectOption: true,
     allowDeselect: true,
     closeOnSelect: true,
-    placeholderText: "Add Filters"
+    placeholder: "Add Filters"
   });
 }
 
@@ -1575,7 +1582,7 @@ function setStoreFilter() {
     allowDeselectOption: true,
     allowDeselect: true,
     closeOnSelect: true,
-    placeholderText: "Add Filters"
+    placeholder: "Add Filters"
   });
 }
 
@@ -1599,7 +1606,7 @@ function setAirbnbFilter() {
     allowDeselectOption: true,
     allowDeselect: true,
     closeOnSelect: true,
-    placeholderText: "Add Layers"
+    placeholder: "Add Layers"
   });
 }
 
@@ -1725,11 +1732,22 @@ function filterFeatures() {
   airbnbData = JSON.parse(JSON.stringify(airbnbDataAll))
 
   let flagged = document.querySelector('#flaggedbox')
+  let unflagged = document.querySelector('#unflaggedbox')
   if (flagged.checked) {
+    unflagged.disabled = true
     for (let i = 0; i < data.length; i++) {
       data[i].info2 = data[i].info2.filter(item => item.flagged)
     }
   }
+  else { unflagged.disabled = false }
+
+  if (unflagged.checked) {
+    flagged.disabled = true
+    for (let i = 0; i < data.length; i++) {
+      data[i].info2 = data[i].info2.filter(item => !item.flagged)
+    }
+  }
+  else { flagged.disabled = false }
 
   let openOnly = document.querySelector('#openbox')
   if (openOnly.checked) {
@@ -1743,7 +1761,7 @@ function filterFeatures() {
   let newOnly = document.querySelector('#newbox')
   if (newOnly.checked) {
     for (let i = 0; i < data.length; i++) { 
-      if (data[i].info.length !== 1 || data[i].info[0].year_collected !== parseInt(allYears[0])) {
+      if (data[i].info.length !== 1 || data[i].info[0].year_collected !== parseInt(allYears.sort().reverse()[0])) {
         data[i].info2 = []
       }
     }
@@ -1771,6 +1789,7 @@ function filterFeatures() {
       data[i].info2 = data[i].info2.filter(item => storeTargets.includes(item.store_type))
     }
   }
+  let layerShopAirbnb = document.querySelector('#layerbox')
   for (let i = 0; i < airbnbData.length; i++) {
     let found = false;
     for (let j = 0; j < airbnbData[i].years.length; j++) {
@@ -1779,6 +1798,24 @@ function filterFeatures() {
         break;
       }
     } 
+    if (layerShopAirbnb.checked) {
+      if (yearTargets.length === 0) {
+        for (let j = 0; j < airbnbData[i].years.length; j++) {
+          if (allYears.indexOf(airbnbData[i].years[j]) !== -1) {
+            found = true;
+            break;
+          }
+        }
+      }
+      else {
+        for (let j = 0; j < airbnbData[i].years.length; j++) {
+          if (yearTargets.indexOf(airbnbData[i].years[j]) !== -1) {
+            found = true;
+            break;
+          }
+        }
+      }
+    }
     if (!found) { airbnbData[i].years = [] }
   }
 
