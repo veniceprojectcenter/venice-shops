@@ -13,12 +13,16 @@ const express = require("express"),
 const uri = "mongodb+srv://mapuser:mapuser@cluster0.0k894.mongodb.net/"
 
 const client = new mongodb.MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
-let collection = null;
+let collection = null
 let collection2 = null
+let collection3 = null
 
 client.connect(err => {
-  collection2 = client.db("VeniceShops").collection("Airbnb")
-  collection = client.db("VeniceShops").collection("MapsFeatures")
+  //collection = client.db("VeniceShops").collection("MapsFeatures")
+  //collection2 = client.db("VeniceShops").collection("Airbnb")
+  collection = client.db("VeniceShops").collection("Test")
+  collection2 = client.db("VeniceShops").collection("TestAirbnb")
+  collection3 = client.db("VeniceShops").collection("Types")
 })
 
 const auth = new google.auth.GoogleAuth({
@@ -41,7 +45,7 @@ app.get("/load", function(request, response) {
   collection
     .find({})
     .toArray()
-    .then(result => response.json(result));
+    .then(result => response.json(result))
 })
 
 app.get("/loadairbnb", function(request, response) {
@@ -49,6 +53,23 @@ app.get("/loadairbnb", function(request, response) {
     .find({})
     .toArray()
     .then(result => response.json(result));
+})
+
+app.get("/loadtypes", function(request, response) {
+  collection3
+    .find({})
+    .toArray()
+    .then(result => response.json(result))
+})
+
+app.post("/settypes", function(request, response) {
+  const insertion = request.body.data
+  collection3
+    .deleteMany({})
+    .then(collection3.insertMany(insertion))
+    .then(collection3.find({})
+      .toArray()
+      .then(result => response.json(result)))
 })
 
 app.post("/addLoc", function(request, response) {

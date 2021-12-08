@@ -1,6 +1,6 @@
 .bar {
     display: grid;
-    grid-template-columns: 15% 70% 15%;
+    grid-template-columns: 23% 54% 23%;
     padding-left: 0px;
     margin-left: 0px;
     margin-top: -10px;
@@ -44,6 +44,12 @@
     grid-template-columns: 60% 40%;
     row-gap: -10px;
     margin-top: 15px;
+}
+
+.typeGrid {
+    display: grid;
+    margin-left: 10px;
+    grid-template-columns: 35% 45%;
 }
 
 .col1 {
@@ -217,3 +223,28 @@ button {
 #top {
     margin-top: 5px;
 }
+
+.switch-toggle {
+    position: inline-block;
+    margin-top: 20px;
+    margin-left: 20px;
+    width: 210px;
+    height: 20px;
+    float: left;
+    background: #242729;
+ }
+ .switch-toggle input {
+    position: relative;
+    width: 70px;
+    height: 20px;
+    top: -20px;
+    left: 0;
+    opacity: 0;
+ }
+ .switch-toggle label {
+    width: 70px;
+    height: 20px;
+    border: 0px;
+    float:left;
+    color: #fff;
+ }

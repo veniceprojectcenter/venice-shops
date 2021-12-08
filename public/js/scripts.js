@@ -2,6 +2,8 @@ let data
 let dataAll
 let airbnbData
 let airbnbDataAll
+let typesDatabase
+let typesDatabaseDefault = []
 
 let centerX = 12.34
 let centerY = 45.436
@@ -12,7 +14,7 @@ let mapY
 var container = document.getElementById('popup');
 var content = document.getElementById('popup-content');
 var closer = document.getElementById('popup-closer');
-var overlay;
+var overlay
 var popupIndex
 
 let newfeatures = []
@@ -27,7 +29,7 @@ const abbvs = {
 }
 
 const shopTypes = {
-  'Clothing Stores': ['Clothing', 'Costumes', "Children's Clothing", 'Gloves', 'Mask', "Men's Clothing", 'Shoes',
+  'Clothing Stores': ['Clothing', 'Costumes', "Children's Clothing", 'Gloves', "Men's Clothing", 'Shoes',
     'Undergarments', "Women's Clothing"],
   'Drug Stores': ['Cosmetics', 'Medical Goods', 'Pharmacy'],
   'Entertainment': ['Casino', 'Entertainment', 'Movie Theater'],
@@ -45,16 +47,16 @@ const shopTypes = {
   'Specialty Stores': ['Accessories', 'Antiques', 'Art', 'Art Gallery', 'Boat Supplies', 'Books',
     'Coins and Stamps', 'Computer', 'Electrical Appliances', 'Electronics', 'Exchange', 'Eyewear', 'Fishing',
     'Florist', 'Furniture', 'Glass', 'Hardware', 'Household Goods', 'Jewelry', 'Knives', 'Leather Goods',
-    'Light Store', 'Luxury', 'Metal Work', 'Music', 'Musical Instruments', 'Newspaper', 'Office Supplies',
+    'Light Store', 'Luxury', 'Mask', 'Metal Work', 'Music', 'Musical Instruments', 'Newspaper', 'Office Supplies',
     'Pawn Shop', 'Pet Store', 'Picture Frames', 'Souvenirs', 'Sporting Goods', 'Stationery', 'Tobacco', 'Textiles',
     'Toys', 'Woodwork', 'Other Retail'],
   'Other': ['Closed', 'Undefined', 'Radio and Television', 'Stall']
 }
 
 const colors = {
-  "Clothing Stores": "#2E86C1", "Drug Stores": "#2E86C1", "Entertainment": "#8E44AD", 
-  "Food and Beverage": "#F39C12", "Grocery Stores & Supermarkets": "#F39C12", 
-  "Lodging": "#378805", "Restaurants & Bars": "#F39C12", "Services": "#99A3A4", 
+  "Clothing Stores": "#2E86C1", "Drug Stores": "#2E86C1", "Entertainment": "#8E44AD",
+  "Food and Beverage": "#F39C12", "Grocery Stores & Supermarkets": "#F39C12",
+  "Lodging": "#378805", "Restaurants & Bars": "#F39C12", "Services": "#99A3A4",
   "Specialty Stores": "#2E86C1", "Other": "#000000", "airbnb": "#C0392B"
 }
 
@@ -70,6 +72,7 @@ let timelapseInterval;
 
 let allYears = []
 let allSestieres = []
+let allTypes = []
 let allAirbnbs = []
 
 let yearOptions = []
@@ -91,26 +94,26 @@ let radiusStyle = 5
 function setBaselines() {
   for (let i = 0; i < data.length; i++) {
     for (let j = 0; j < data[i].info.length; j++) {
-      if (data[i].info[j].year_collected != "" && !allYears.includes(String(data[i].info[j].year_collected))) {
+      if (data[i].info[j].year_collected !== "" && !allYears.includes(String(data[i].info[j].year_collected))) {
         allYears.push(String(data[i].info[j].year_collected))
       }
-      if (data[i].address_sestiere != "" && !allSestieres.includes(data[i].address_sestiere)) {
+      if (data[i].address_sestiere !== "" && !allSestieres.includes(data[i].address_sestiere)) {
         allSestieres.push(data[i].address_sestiere)
       }
     }
   }
   for (let i = 0; i < airbnbData.length; i++) {
-    for (let j = 0; j < airbnbData[i].years.length; j++){
+    for (let j = 0; j < airbnbData[i].years.length; j++) {
       if (!allAirbnbs.includes(String(airbnbData[i].years[j]))) {
         allAirbnbs.push(String(airbnbData[i].years[j]))
       }
     }
   }
 
-  let yearNames = allYears.sort().reverse()
-  for (let i = 0; i < yearNames.length; i++) {
+  allYears = allYears.sort().reverse()
+  for (let i = 0; i < allYears.length; i++) {
     const yearOpt = document.createElement('option')
-    yearOpt.value = yearOpt.text = yearNames[i]
+    yearOpt.value = yearOpt.text = allYears[i]
     yearOptions.push(yearOpt)
   }
 
@@ -138,20 +141,21 @@ function setBaselines() {
   for (let i = 0; i < keys.length; i++) {
     const shopOptG = document.createElement('optgroup')
     shopOptG.label = keys[i]
-    for (let j = 0; j < shopTypes[keys[i]].length; j++) {
-      const shopOpt = document.createElement('option')
-      shopOpt.value = shopOpt.text = shopTypes[keys[i]][j]
-      shopOptG.appendChild(shopOpt)
-    }
-    storesOptions.push(shopOptG)
 
     const shopOptG2 = document.createElement('optgroup')
     shopOptG2.label = keys[i]
     for (let j = 0; j < shopTypes[keys[i]].length; j++) {
+      const shopOpt = document.createElement('option')
+      shopOpt.value = shopOpt.text = shopTypes[keys[i]][j]
+      shopOptG.appendChild(shopOpt)
+
       const shopOpt2 = document.createElement('option')
       shopOpt2.value = shopOpt2.text = shopTypes[keys[i]][j]
       shopOptG2.appendChild(shopOpt2)
+
+      allTypes.push(shopTypes[keys[i]][j])
     }
+    storesOptions.push(shopOptG)
     storesOptions2.push(shopOptG2)
   }
 }
@@ -159,7 +163,7 @@ function setBaselines() {
 function setFeatures() {
   newfeatures = []
 
-  for (let i = 0; i < airbnbData.length; i++){
+  for (let i = 0; i < airbnbData.length; i++) {
     if (airbnbData[i].years.length > 0) {
       let next = new ol.Feature({
         geometry: new ol.geom.Point(ol.proj.fromLonLat([airbnbData[i].lng, airbnbData[i].lat])),
@@ -200,6 +204,7 @@ function setFeatures() {
 
 function removePopup() {
   popupPresent = false
+  typesDatabase = JSON.parse(JSON.stringify(typesDatabaseDefault))
   overlay.setPosition(undefined);
   closer.blur();
 }
@@ -308,7 +313,7 @@ function addLayer() {
       image: new ol.style.Circle({
         fill: fill,
         stroke: stroke,
-        radius: (colorkeys[i] !== "airbnb") ? radiusStyle : radiusStyle/2
+        radius: (colorkeys[i] !== "airbnb") ? radiusStyle : radiusStyle / 2
       }),
       fill: fill,
       stroke: stroke
@@ -333,14 +338,14 @@ function addLayer() {
       stroke: stroke
     })
   }
-  for (let i = 0; i < newfeatures.length; i++){
-    if (newfeatures[i].A.type === "shop"){
+  for (let i = 0; i < newfeatures.length; i++) {
+    if (newfeatures[i].A.type === "shop") {
       let category = ""
       let categories = Object.keys(shopTypes)
-      for (let j = 0; j < categories.length; j++){
-        if (shopTypes[categories[j]].includes(newfeatures[i].A.info[newfeatures[i].A.info.length-1].store_type)) {
+      for (let j = 0; j < categories.length; j++) {
+        if (shopTypes[categories[j]].includes(newfeatures[i].A.info[newfeatures[i].A.info.length - 1].store_type)) {
           category = categories[j]
-          if (newfeatures[i].A.info[newfeatures[i].A.info.length-1].year_collected === parseInt(allYears[0])) {
+          if (newfeatures[i].A.info[newfeatures[i].A.info.length - 1].year_collected === parseInt(allYears[0])) {
             category = category + "new"
           }
         }
@@ -997,13 +1002,13 @@ function setContent(pointInfo) {
     + '<h3>' + currInfo.address_street + '</h3>'
     + '<h3>' + currInfo.store_type + '</h3>'
     + '<p>' + currInfo.note + '</p>'
-  
-  content.appendChild(displayedInfo)  
-  
+
+  content.appendChild(displayedInfo)
+
   const oldImagePreview = document.querySelector('#oldImagePreview')
   oldImagePreview.onclick = function () {
-    if(currInfo.image_url.length > 0) {
-    window.open(currInfo.image_url.substring(0, currInfo.image_url.length - 16), '_blank');
+    if (currInfo.image_url.length > 0) {
+      window.open(currInfo.image_url.substring(0, currInfo.image_url.length - 16), '_blank');
     }
   }
 
@@ -1097,7 +1102,7 @@ function setDownload() {
   downloadButton.onclick = function () {
     var element = document.createElement('a');
 
-    let csvData = 'ID, Latitude, Longitude, Name, Number, Address, Sestiere, Year, Type, Closed?, Changed?, First?, Tourist?, Artisan?, Lodging?\n'
+    let csvData = 'ID, Latitude, Longitude, Name, Number, Address, Sestiere, Year, Type, Remained Next Time?, Changed?, First?, Tourist?, Mixed?, Resident?, Artisan?, Lodging?\n'
     for (let i = 0; i < data.length; i++) {
       if (data[i].info2.length !== 0) {
         for (let j = 0; j < data[i].info.length; j++) {
@@ -1118,22 +1123,28 @@ function setDownload() {
           }
           else { csvData = csvData + 'True, ' }
 
-          if (j !== 0 && data[i].info[j-1].store_type !== thisInfo.store_type) { 
-            csvData = csvData + 'True, ' 
+          if (j !== 0 && data[i].info[j - 1].store_type !== thisInfo.store_type) {
+            csvData = csvData + 'True, '
           }
           else { csvData = csvData + 'False, ' }
 
           if (j === 0) { csvData = csvData + 'True, ' }
           else { csvData = csvData + 'False, ' }
 
-          const touristTypes = ['Mask', 'Souvenirs', 'Luxury', 'Glass', 'Jewelry', 'Antiques', ]
+          for (let k = 0; k < typesDatabase.length; k++) {
+            if (typesDatabase[k].type === thisInfo.store_type) {
+              if (typesDatabase[k].category === "Tourist") {  csvData = csvData + 'True, False, False, '}
+              else if (typesDatabase[k].category === "Mixed") {  csvData = csvData + 'False, True, False, '}
+              else {  csvData = csvData + 'False, False, True, '}
+            }
+          }
+
           const artisanTypes = ['Mask', 'Bakery', 'Butcher', 'Pizzeria', 'Barber', 'Hair Salon', 'Jewelry Repair',
             'Leather Repair', 'Masseuse', 'Nail Salon', 'Spa', 'Tailor', 'Tattoo and Piercing',
             'Wedding', 'Antiques', 'Florist', 'Glass', 'Jewelry', 'Knives', 'Leather Goods',
             'Pawn Shop', 'Woodwork', 'Picture Frames']
           const lodgingTypes = ['Bed and Breakfast', 'Guest Houses', 'Hotel', 'Hotel with Restaurant', 'Hostel']
-          csvData = csvData + (touristTypes.includes(thisInfo.store_type) ? 'True' : 'False') + ', '
-            + (artisanTypes.includes(thisInfo.store_type) ? 'True' : 'False') + ', '
+          csvData = csvData + (artisanTypes.includes(thisInfo.store_type) ? 'True' : 'False') + ', '
             + (lodgingTypes.includes(thisInfo.store_type) ? 'True' : 'False') + '\n'
         }
       }
@@ -1145,6 +1156,138 @@ function setDownload() {
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
+  }
+}
+
+function setSettings() {
+  const openSettings = document.querySelector('#settings')
+  openSettings.onclick = function () {
+    popupPresent = true
+    overlay.setOffset([-200, -300])
+    overlay.setPosition(ol.proj.transform([mapX, mapY], 'EPSG:4326', 'EPSG:3857'))
+
+    content.innerHTML = ""
+
+    for (let i = 0; i < allTypes.length; i++) {
+      const typeDiv = document.createElement("div")
+      typeDiv.classList.add('typeGrid')
+
+      const typeLabel = document.createElement("h3")
+      typeLabel.innerText = allTypes[i] + ': '
+      typeLabel.style.display = 'inline-block'
+
+      const selector = document.createElement('div')
+      selector.classList.add("switch-toggle")
+
+      const touristInput = document.createElement('input')
+      touristInput.id = 'Tourist' + i
+      touristInput.name = 'state-d' + i
+      touristInput.type = 'radio'
+      touristInput.onclick = function () {
+        if (touristInput.checked) {
+          touristLabel.style.backgroundColor = 'Green'
+          mixedLabel.style.backgroundColor = 'Black'
+          residentLabel.style.backgroundColor = 'Black'
+          typesDatabase[i].category = 'Tourist'
+        }
+        else { touristLabel.style.backgroundColor = 'Black' }
+      }
+      const touristLabel = document.createElement('label')
+      touristLabel.for = 'Tourist' + i
+      touristLabel.innerText = 'Tourist'
+      if (typesDatabase[i].category === 'Tourist') {
+        touristInput.checked = true
+        touristLabel.style.backgroundColor = 'Green'
+      }
+      selector.appendChild(touristLabel)
+      touristLabel.appendChild(touristInput)
+
+      const mixedInput = document.createElement('input')
+      mixedInput.id = 'Mixed' + i
+      mixedInput.name = 'state-d' + i
+      mixedInput.type = 'radio'
+      mixedInput.onclick = function () {
+        if (mixedInput.checked) {
+          touristLabel.style.backgroundColor = 'Black'
+          mixedLabel.style.backgroundColor = 'Green'
+          residentLabel.style.backgroundColor = 'Black'
+          typesDatabase[i].category = 'Mixed'
+        }
+        else { mixedLabel.style.backgroundColor = 'Black' }
+      }
+      const mixedLabel = document.createElement('label')
+      mixedLabel.for = 'Mixed' + i
+      mixedLabel.innerText = 'Mixed'
+      if (typesDatabase[i].category === 'Mixed') {
+        mixedInput.checked = true
+        mixedLabel.style.backgroundColor = 'Green'
+      }
+      selector.appendChild(mixedLabel)
+      mixedLabel.appendChild(mixedInput)
+
+      const residentInput = document.createElement('input')
+      residentInput.id = 'Resident' + i
+      residentInput.name = 'state-d' + i
+      residentInput.type = 'radio'
+      residentInput.onclick = function () {
+        if (residentInput.checked) {
+          touristLabel.style.backgroundColor = 'Black'
+          mixedLabel.style.backgroundColor = 'Black'
+          residentLabel.style.backgroundColor = 'Green'
+          typesDatabase[i].category = 'Resident'
+        }
+        else { residentLabel.style.backgroundColor = 'Black' }
+      }
+      const residentLabel = document.createElement('label')
+      residentLabel.for = 'Resident' + i
+      residentLabel.innerText = 'Resident'
+      if (typesDatabase[i].category === 'Resident') {
+        residentInput.checked = true
+        residentLabel.style.backgroundColor = 'Green'
+      }
+      selector.appendChild(residentLabel)
+      residentLabel.appendChild(residentInput)
+
+      typeDiv.appendChild(typeLabel)
+      typeDiv.appendChild(selector)
+      content.appendChild(typeDiv)
+    }
+
+    content.appendChild(document.createElement("br"))
+    content.appendChild(document.createElement("br"))
+    content.appendChild(document.createElement("br"))
+    content.appendChild(document.createElement("br"))
+
+    const cancelButton = document.createElement("button")
+    cancelButton.innerText = "cancel"
+    cancelButton.classList.add("scrollButton")
+    cancelButton.classList.add("leftButton")
+    cancelButton.onclick = function () {
+      removePopup()
+    }
+    content.appendChild(cancelButton)
+
+    const submitButton = document.createElement("button")
+    submitButton.innerText = "submit"
+    submitButton.classList.add("scrollButton")
+    submitButton.classList.add("rightButton")
+    submitButton.onclick = function () {
+      fetch("/settypes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({'data': typesDatabase})
+      })
+      .then(function (response) {
+        return response.json()
+      })
+      .then(function (json) {
+        typesDatabase = json
+        typesDatabaseDefault = JSON.parse(JSON.stringify(typesDatabase))
+        return 0
+      })
+      .then(removePopup())
+    }
+    content.appendChild(submitButton)
   }
 }
 
@@ -1361,7 +1504,7 @@ function setAddLocation() {
     submitButton.classList.add("scrollButton")
     submitButton.classList.add("rightButton")
     submitButton.onclick = function () {
-      if (numberInput.value = "") {
+      if (numberInput.value === "") {
         alert("Address Number cannot be left blank")
       }
       else if (isNaN(latInput.value)) {
@@ -1752,7 +1895,7 @@ function filterFeatures() {
   let openOnly = document.querySelector('#openbox')
   if (openOnly.checked) {
     for (let i = 0; i < data.length; i++) {
-      if (data[i].info2.length !== 0 && data[i].info2[data[i].info2.length-1].store_type === 'Closed') {
+      if (data[i].info2.length !== 0 && data[i].info2[data[i].info2.length - 1].store_type === 'Closed') {
         data[i].info2 = []
       }
     }
@@ -1760,8 +1903,8 @@ function filterFeatures() {
 
   let newOnly = document.querySelector('#newbox')
   if (newOnly.checked) {
-    for (let i = 0; i < data.length; i++) { 
-      if (data[i].info.length !== 1 || data[i].info[0].year_collected !== parseInt(allYears.sort().reverse()[0])) {
+    for (let i = 0; i < data.length; i++) {
+      if (data[i].info.length !== 1 || data[i].info[0].year_collected !== parseInt(allYears[0])) {
         data[i].info2 = []
       }
     }
@@ -1797,7 +1940,7 @@ function filterFeatures() {
         found = true;
         break;
       }
-    } 
+    }
     if (layerShopAirbnb.checked) {
       if (yearTargets.length === 0) {
         for (let j = 0; j < airbnbData[i].years.length; j++) {
@@ -1873,23 +2016,37 @@ window.onload = function () {
             return 0
           })
           .then(function (data) {
-            setBaselines()
-            setFeatures()
-            setPopup()
-            addLayer()
-            setGoToLocation()
-            setGoHome()
-            setDownload()
-            setAddLocation()
-            setCheckboxes()
-            setYearFilter()
-            setSestiereFilter()
-            setStoreFilter()
-            setAirbnbFilter()
-            setTimelapse()
-            setChangeSize()
-            filterFeatures()
-            return 0
+            fetch("/loadtypes", {
+              method: "GET"
+            })
+              .then(function (response) {
+                return response.json()
+              })
+              .then(function (json) {
+                typesDatabase = json
+                typesDatabaseDefault = JSON.parse(JSON.stringify(typesDatabase))
+                return 0
+              })
+              .then(function (data) {
+                setBaselines()
+                setFeatures()
+                setPopup()
+                addLayer()
+                setGoToLocation()
+                setGoHome()
+                setDownload()
+                setSettings()
+                setAddLocation()
+                setCheckboxes()
+                setYearFilter()
+                setSestiereFilter()
+                setStoreFilter()
+                setAirbnbFilter()
+                setTimelapse()
+                setChangeSize()
+                filterFeatures()
+                return 0
+              })
           })
       })
   })
