@@ -18,10 +18,10 @@ let collection2 = null
 let collection3 = null
 
 client.connect(err => {
-  //collection = client.db("VeniceShops").collection("MapsFeatures")
-  //collection2 = client.db("VeniceShops").collection("Airbnb")
-  collection = client.db("VeniceShops").collection("Test")
-  collection2 = client.db("VeniceShops").collection("TestAirbnb")
+  collection = client.db("VeniceShops").collection("MapsFeatures")
+  collection2 = client.db("VeniceShops").collection("Airbnb")
+  //collection = client.db("VeniceShops").collection("Test")
+  //collection2 = client.db("VeniceShops").collection("TestAirbnb")
   collection3 = client.db("VeniceShops").collection("Types")
 })
 

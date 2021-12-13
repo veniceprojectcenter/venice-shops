@@ -49,7 +49,7 @@
 .typeGrid {
     display: grid;
     margin-left: 10px;
-    grid-template-columns: 35% 45%;
+    grid-template-columns: 35% 65%;
 }
 
 .col1 {
@@ -163,7 +163,7 @@ h1, h2, h3{
 .leftButton {
     position: absolute;
     left: 20px;
-    bottom: 20px ;
+    bottom: 20px;
 }
 
 .rightButton {

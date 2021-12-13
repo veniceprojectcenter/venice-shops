@@ -369,6 +369,7 @@ function setContent(pointInfo) {
   content.innerHTML = ""
 
   let information = pointInfo.info
+
   let currInfo = information[popupIndex]
 
   const editButton = document.createElement("button");
@@ -1102,7 +1103,7 @@ function setDownload() {
   downloadButton.onclick = function () {
     var element = document.createElement('a');
 
-    let csvData = 'ID, Latitude, Longitude, Name, Number, Address, Sestiere, Year, Type, Remained Next Time?, Changed?, First?, Tourist?, Mixed?, Resident?, Artisan?, Lodging?\n'
+    let csvData = 'ID, Latitude, Longitude, Name, Number, Address, Sestiere, Year, Type, Category, Remained Next Time?, Changed?, First?, Tourist?, Mixed?, Resident?, Artisan?, Lodging?\n'
     for (let i = 0; i < data.length; i++) {
       if (data[i].info2.length !== 0) {
         for (let j = 0; j < data[i].info.length; j++) {
@@ -1116,6 +1117,13 @@ function setDownload() {
             + data[i].address_sestiere + ', '
             + thisInfo.year_collected + ', '
             + thisInfo.store_type + ', '
+
+          const keys = Object.keys(shopTypes)
+          for (let k = 0; k < keys.length; k++) {
+            if (shopTypes[keys[k]].includes(thisInfo.store_type)) {
+              csvData = csvData + keys[k] + ', '
+            }
+          }
 
           if (j === data[i].info.length - 1) { csvData = csvData + 'N/A, ' }
           else if (thisInfo.store_type === data[i].info[j + 1].store_type && thisInfo.store_type !== 'Closed') {
@@ -1649,11 +1657,11 @@ function setCheckboxes() {
   const openBox = document.querySelector('#openbox')
   openBox.addEventListener("change", filterFeatures)
 
-  const newFilter = document.querySelector('#newFilter')
-  newFilter.innerHTML = '<input class="checkbox" type="checkbox" id="newbox">'
-    + '<label for="newbox">New</label>'
-  const newBox = document.querySelector('#newbox')
-  newBox.addEventListener("change", filterFeatures)
+  const shopsFilter = document.querySelector('#shopsFilter')
+  shopsFilter.innerHTML = '<input class="checkbox" type="checkbox" id="shopsbox" checked="True">'
+    + '<label for="shopsbox">Shops</label>'
+  const shopsBox = document.querySelector('#shopsbox')
+  shopsBox.addEventListener("change", filterFeatures)
 }
 
 function setYearFilter() {
@@ -1803,7 +1811,7 @@ function startTimelapse() {
       yearDisplay.innerText = allYearTargets[yearIndex]
       yearIndex = yearIndex + 1
       if (yearIndex === allYearTargets.length) { yearIndex = 0 }
-    }, 1000)
+    }, 2000)
   }
 }
 
@@ -1901,12 +1909,10 @@ function filterFeatures() {
     }
   }
 
-  let newOnly = document.querySelector('#newbox')
-  if (newOnly.checked) {
+  let newOnly = document.querySelector('#shopsbox')
+  if (!newOnly.checked) {
     for (let i = 0; i < data.length; i++) {
-      if (data[i].info.length !== 1 || data[i].info[0].year_collected !== parseInt(allYears[0])) {
-        data[i].info2 = []
-      }
+      data[i].info2 = []
     }
   }
 
