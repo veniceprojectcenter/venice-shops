@@ -20,8 +20,6 @@ let collection3 = null
 client.connect(err => {
   collection = client.db("VeniceShops").collection("MapsFeatures")
   collection2 = client.db("VeniceShops").collection("Airbnb")
-  //collection = client.db("VeniceShops").collection("Test")
-  //collection2 = client.db("VeniceShops").collection("TestAirbnb")
   collection3 = client.db("VeniceShops").collection("Types")
 })
 
@@ -73,8 +71,7 @@ app.post("/settypes", function(request, response) {
 })
 
 app.post("/addLoc", function(request, response) {
-  const infoArray = []
-  const infoJSON = {
+  const infoArray = [{
     parent_id: request.body.parent_id,
     address: request.body.sestiere + " " + request.body.number,
     address_street: request.body.street + " " + request.body.number,
@@ -86,8 +83,7 @@ app.post("/addLoc", function(request, response) {
     image_url: request.body.image,
     note: request.body.note,
     flagged: request.body.flagged
-  }
-  infoArray.push(infoJSON)
+  }]
   const jsonNew = {
     parent_id: request.body.parent_id,
     lat: request.body.lat,
@@ -142,8 +138,9 @@ app.post("/edit", function(request, response) {
     flagged: request.body.flagged
   };
   for (let i = 0; i < newInfo.length; i++){
-    if (newInfo[i].year_collected === jsonNew.year_collected){
+    if (newInfo[i].year_collected === request.body.year && !newInfo[i].deleted) {
       newInfo[i] = jsonNew
+      break;
     }
   }
   collection.updateOne(
@@ -156,7 +153,12 @@ app.post("/edit", function(request, response) {
 
 app.post("/delete", function(request, response) {
   const newInfo = request.body.info
-  newInfo[request.body.index].deleted = true
+  for (let i = 0; i < newInfo.length; i++){
+    if (newInfo[i].year_collected === request.body.year && !newInfo[i].deleted) {
+      newInfo[i].deleted = true
+      break
+    }
+  }
   collection.updateOne(
     { _id: mongodb.ObjectId(request.body._id) },
     { $set: { info: newInfo }}

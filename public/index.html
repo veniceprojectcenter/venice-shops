@@ -16,16 +16,15 @@
 
 <body>
   <div class="bar">
-    <div class="col1">
+    <div></div>
+    <h1>VENICE SHOPS</h1>
+    <div class="buttons">
       <button type="button" class="outerIcon" id="gotoLocation">
         <img class="icons" src="assets/gps.png" />
       </button>
       <button type="button" class="outerIcon" id="goHome">
         <img class="icons" src="assets/home.png" />
       </button>
-    </div>
-    <h1 class="col2">VENICE SHOPS</h1>
-    <div class="col3">
       <button type="button" class="outerIcon" id="download">
         <img class="icons" src="assets/download.png" />
       </button>
@@ -38,7 +37,7 @@
     </div>
   </div>
 
-  <div class="grid">
+  <div class="mainGrid">
     <div id="map" class="map">
       <button type="button" id="changeSize">
         <img class="icons" id="changeSizeImg" src="assets/enlarge.png" />
@@ -47,16 +46,13 @@
 
     <div id="filter">
       <h1 id="top">Filters</h1>
-      <div class="checkboxGrid">
-        <h3 class="checkboxLabel" id="flagFilter">Flagged</h3>
-        <h3 class="checkboxLabel" id="openFilter">Open</h3>
-        <h3 class="checkboxLabel" id="unflagFilter">Unflagged</h3>
+      <div class="checkboxGrid1">
         <h3 class="checkboxLabel" id="shopsFilter">Shops</h3>
         <h3 class="checkboxLabel" id="airbnbFilter">Airbnbs</h3>
       </div>
-      <h2 id="yearFilter">Year Collected</h2>
-      <h2 id="sestiereFilter">Sestiere</h2>
-      <h2 id="storeFilter">Shop Type</h2>
+      <h2 class="filters" id="yearFilter">Year Collected</h2>
+      <h2 class="filters" id="sestiereFilter">Sestiere</h2>
+      <h2 class="filters" id="storeFilter">Shop Type</h2>
       <div class='collected'>
         <h2>Shops selected:</h2>
         <h2 class="countDisplay" id="numberDisplay"></h2>
@@ -66,10 +62,18 @@
         <h2 class="countDisplay" id="airbnbNumberDisplay"></h2>
       </div>
       <div id="cycleButtons">
-        <button type="button" class="scrollButton" id="timelapseButton">Cycle Years</button>
-        <button type="button" class="scrollButton" id="stopTimelapseButton">Stop Cycling</button>
+        <button type="button" class="textButton" id="timelapseButton">Cycle Years</button>
+        <button type="button" class="textButton" id="stopTimelapseButton">Stop Cycling</button>
       </div>
       <h1 id=yearDisplay></h1>
+      <div class="checkboxGrid2">
+        <h3 class="checkboxLabel" id="flagFilter">Flagged</h3>
+        <h3 class="checkboxLabel" id="unflagFilter">Unflagged</h3>
+        <h3 class="checkboxLabel" id="openFilter">Open</h3>
+        <h3 class="checkboxLabel" id="touristFilter">Tourist</h3>
+        <h3 class="checkboxLabel" id="residentFilter">Resident</h3>
+        <h3 class="checkboxLabel" id="mixedFilter">Mixed</h3>
+      </div>
     </div>
   </div>
 
@@ -77,8 +81,7 @@
     <a href="#" id="popup-closer" class="ol-popup-closer"></a>
     <div id="popup-content"></div>
   </div>
-
-  <p id="abbvPopup"><p>
+  <p id="abbrPopup"><p>
 </body>
 
 </html>

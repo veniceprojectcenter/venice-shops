@@ -1,6 +1,6 @@
 .bar {
     display: grid;
-    grid-template-columns: 23% 54% 23%;
+    grid-template-columns: 40% 20% 40%;
     padding-left: 0px;
     margin-left: 0px;
     margin-top: -10px;
@@ -39,9 +39,16 @@
     font-size: large;
 }
 
-.checkboxGrid {
+.checkboxGrid1 {
     display: grid;
-    grid-template-columns: 60% 40%;
+    grid-template-columns: 50% 50%;
+    margin: auto;
+    width: 70%;
+}
+
+.checkboxGrid2 {
+    display: grid;
+    grid-template-columns: 50% 50%;
     row-gap: -10px;
     margin-top: 15px;
 }
@@ -52,25 +59,18 @@
     grid-template-columns: 35% 65%;
 }
 
-.col1 {
-    grid-column: 1;
-    margin-top: auto;
-    margin-bottom: auto;
-    margin-right: 50%;
-}
-
-.col3 {
+.buttons {
     grid-column: 3;
     margin-top: auto;
     margin-bottom: auto;
-    margin-left: 50%
+    text-align: right;
+    margin-right: 20px;
 }
 
 .collected {
     display: flex;
     justify-content: center;
     margin-top: -20px;
-    margin-bottom: 20px;
 }
 
 .map {
@@ -100,7 +100,7 @@ h1, h2, h3{
     text-align: center;
 }
 
-.scrollButton{
+.textButton{
     width: 120px;
     height: 40px;
     border-radius: 10px;
@@ -109,14 +109,14 @@ h1, h2, h3{
     font-size: medium;
 }
 
-.grid {
+.mainGrid {
     display: grid;
     height: 800px;
     grid-template-columns: repeat(5, 20%);
     grid-column-gap: 0px;
 }
 
-#yearFilter #sestiereFilter #shopFilter {
+.filters {
     justify-content: center;
 }
 
@@ -126,6 +126,8 @@ h1, h2, h3{
 
 .imagePreview {
     margin-top: 20px;
+    width: 200px;
+    height: 200px;
 }
 
 .outerIcon {
@@ -144,15 +146,7 @@ h1, h2, h3{
     text-align: left;
 }
 
-.popcol2 {
-    margin: auto;
-}
-
-.popcol3 {
-    margin: auto;
-}
-
-.popcol4 {
+.popcol2, .popcol3, .popcol4 {
     margin: auto;
 }
 
@@ -187,11 +181,6 @@ h1, h2, h3{
     margin-top: 5px;
     margin-bottom: 5px;
     text-align: left;
-}
-
-#layerFilter {
-    margin-top: 0;
-    margin-bottom: 15px;
 }
 
 #yearDisplay {

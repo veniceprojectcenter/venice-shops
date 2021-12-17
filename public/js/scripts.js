@@ -1,29 +1,29 @@
-let data
-let dataAll
-let airbnbData
-let airbnbDataAll
+let dataFiltered
+let dataUnfiltered
+let dataWithDeleted
+let airbnbFiltered
+let airbnbUnfiltered
 let typesDatabase
 let typesDatabaseDefault = []
-
-let centerX = 12.34
-let centerY = 45.436
 
 let mapX
 let mapY
 
+let abbrPopup = document.querySelector('#abbrPopup')
 var container = document.getElementById('popup');
 var content = document.getElementById('popup-content');
 var closer = document.getElementById('popup-closer');
 var overlay
 var popupIndex
+let popupPresent = false
 
 let newfeatures = []
 
 let map
 let layer
+let styles = {}
 
-let abbvPopup = document.querySelector('#abbvPopup')
-const abbvs = {
+const abbrs = {
   "Cannaregio": "CN", "Castello": "CS", "San Marco": "SM", "Dorsoduro": "DD",
   "San Polo": "SP", "Santa Croce": "SC", "Giudecca": "GD"
 }
@@ -60,51 +60,70 @@ const colors = {
   "Specialty Stores": "#2E86C1", "Other": "#000000", "airbnb": "#C0392B"
 }
 
+const artisanTypes = [
+  'Mask', 'Bakery', 'Butcher', 'Pizzeria', 'Barber', 'Hair Salon', 'Jewelry Repair', 'Leather Repair', 'Masseuse', 
+  'Nail Salon', 'Spa', 'Tailor', 'Tattoo and Piercing', 'Wedding', 'Antiques', 'Florist', 'Glass', 'Jewelry', 
+  'Knives', 'Leather Goods', 'Pawn Shop', 'Woodwork', 'Picture Frames'
+]
+const lodgingTypes = ['Bed and Breakfast', 'Guest Houses', 'Hotel', 'Hotel with Restaurant', 'Hostel']
+
 let yearTargets = []
 let sestiereTargets = []
 let storeTargets = []
-let airbnbTargets = []
 
 let timelapsing = false
 let paused = false
 let yearIndex = 0
 let timelapseInterval;
+let CYCLETIME = 2000
 
-let allYears = []
-let allSestieres = []
-let allTypes = []
-let allAirbnbs = []
-
-let yearOptions = []
-let sestiereOptions = []
-let storesOptions = []
-let sestiereOptions2 = []
-let storesOptions2 = []
-let airbnbOptions = []
-let airbnbOptions2 = []
+let allYears
+let allSestieres
+let allTypes
+let yearOptions
+let sestiereOptions
+let sestiereOptionsCopy
+let storesOptions
+let storesOptionsCopy
 
 const yearFilterDefault = document.querySelector('#yearFilter').innerHTML
 const sestiereFilterDefault = document.querySelector('#sestiereFilter').innerHTML
 const storeFilterDefault = document.querySelector('#storeFilter').innerHTML
 
-let popupPresent = false
-let radiusStyle = 5
+let RADIUS = 5
+let MINZOOM = 14.5
+let MAXZOOM = 25
+let CENTERX = 12.34
+let CENTERY = 45.436
+let WEST = 12.2915
+let EAST = 12.379
+let NORTH = 45.453
+let SOUTH = 45.412
 
 function setBaselines() {
-  for (let i = 0; i < data.length; i++) {
-    for (let j = 0; j < data[i].info.length; j++) {
-      if (data[i].info[j].year_collected !== "" && !allYears.includes(String(data[i].info[j].year_collected))) {
-        allYears.push(String(data[i].info[j].year_collected))
+  allYears = []
+  allSestieres = []
+  allTypes = []
+  yearOptions = []
+  sestiereOptions = []
+  sestiereOptionsCopy = []
+  storesOptions = []
+  storesOptionsCopy = []
+
+  for (let i = 0; i < dataUnfiltered.length; i++) {
+    for (let j = 0; j < dataUnfiltered[i].info.length; j++) {
+      if (dataUnfiltered[i].info[j].year_collected !== "" && !allYears.includes(String(dataUnfiltered[i].info[j].year_collected))) {
+        allYears.push(String(dataUnfiltered[i].info[j].year_collected))
       }
-      if (data[i].address_sestiere !== "" && !allSestieres.includes(data[i].address_sestiere)) {
-        allSestieres.push(data[i].address_sestiere)
+      if (dataUnfiltered[i].address_sestiere !== "" && !allSestieres.includes(dataUnfiltered[i].address_sestiere)) {
+        allSestieres.push(dataUnfiltered[i].address_sestiere)
       }
     }
   }
-  for (let i = 0; i < airbnbData.length; i++) {
-    for (let j = 0; j < airbnbData[i].years.length; j++) {
-      if (!allYears.includes(String(airbnbData[i].years[j])) && !allYears.includes(String(airbnbData[i].years[j]) + ' (Airbnb only)')) {
-        allYears.push(String(airbnbData[i].years[j]) + ' (Airbnb only)')
+  for (let i = 0; i < airbnbUnfiltered.length; i++) {
+    for (let j = 0; j < airbnbUnfiltered[i].years.length; j++) {
+      if (!allYears.includes(String(airbnbUnfiltered[i].years[j])) && !allYears.includes(String(airbnbUnfiltered[i].years[j]) + ' (Airbnb only)')) {
+        allYears.push(String(airbnbUnfiltered[i].years[j]) + ' (Airbnb only)')
       }
     }
   }
@@ -123,16 +142,18 @@ function setBaselines() {
     sestiereOptions.push(sesOpt)
     const sesOpt2 = document.createElement('option')
     sesOpt2.value = sesOpt2.text = sestiereNames[i]
-    sestiereOptions2.push(sesOpt2)
+    sestiereOptionsCopy.push(sesOpt2)
   }
 
   const keys = Object.keys(shopTypes)
   for (let i = 0; i < keys.length; i++) {
     const shopOptG = document.createElement('optgroup')
     shopOptG.label = keys[i]
-
+    shopOptG.id = "red"
     const shopOptG2 = document.createElement('optgroup')
     shopOptG2.label = keys[i]
+    shopOptG2.id = "red"
+
     for (let j = 0; j < shopTypes[keys[i]].length; j++) {
       const shopOpt = document.createElement('option')
       shopOpt.value = shopOpt.text = shopTypes[keys[i]][j]
@@ -145,48 +166,45 @@ function setBaselines() {
       allTypes.push(shopTypes[keys[i]][j])
     }
     storesOptions.push(shopOptG)
-    storesOptions2.push(shopOptG2)
+    storesOptionsCopy.push(shopOptG2)
   }
 }
 
 function setFeatures() {
   newfeatures = []
+  let numcount = 0
 
-  for (let i = 0; i < airbnbData.length; i++) {
-    if (airbnbData[i].years.length > 0) {
+  for (let i = 0; i < airbnbFiltered.length; i++) {
+    if (airbnbFiltered[i].years.length > 0) {
       let next = new ol.Feature({
-        geometry: new ol.geom.Point(ol.proj.fromLonLat([airbnbData[i].lng, airbnbData[i].lat])),
-        years: airbnbData[i].years,
-        sestiere: airbnbData[i].address_sestiere,
+        geometry: new ol.geom.Point(ol.proj.fromLonLat([airbnbFiltered[i].lng, airbnbFiltered[i].lat])),
+        years: airbnbFiltered[i].years,
+        sestiere: airbnbFiltered[i].address_sestiere,
         type: "airbnb"
       })
       newfeatures.push(next)
     }
   }
-
-  for (let i = 0; i < data.length; i++) {
-    if (data[i].info2.length !== 0) {
+  for (let i = 0; i < dataFiltered.length; i++) {
+    if (dataFiltered[i].info2.length !== 0) {
       let next = new ol.Feature({
-        geometry: new ol.geom.Point(ol.proj.fromLonLat([data[i].lng, data[i].lat])),
-        _id: data[i]._id,
-        address: data[i]["address_sestiere"] + " " + data[i]["address_num"],
-        address_street: data[i]["address_street"],
-        address_abbv: abbvs[data[i]["address_sestiere"]] + " " + data[i]["address_num"],
-        parent_id: data[i].parent_id,
-        last_name: data[i].info[data[i].info.length - 1].store_name,
-        info: data[i].info,
+        geometry: new ol.geom.Point(ol.proj.fromLonLat([dataFiltered[i].lng, dataFiltered[i].lat])),
+        _id: dataFiltered[i]._id,
+        address: dataFiltered[i]["address_sestiere"] + " " + dataFiltered[i]["address_num"],
+        address_street: dataFiltered[i]["address_street"],
+        address_abbr: abbrs[dataFiltered[i]["address_sestiere"]] + " " + dataFiltered[i]["address_num"],
+        parent_id: dataFiltered[i].parent_id,
+        last_name: dataFiltered[i].info[dataFiltered[i].info.length - 1].store_name,
+        info: dataFiltered[i].info,
         type: "shop"
       })
+      numcount = numcount + 1 
       newfeatures.push(next)
     }
   }
 
   const numDisplay = document.querySelector('#numberDisplay')
   const airbnbNumDisplay = document.querySelector('#airbnbNumberDisplay')
-  let numcount = 0
-  for (let i = 0; i < newfeatures.length; i++) {
-    if (newfeatures[i].A.type === "shop") { numcount = numcount + 1 }
-  }
   numDisplay.innerText = numcount
   airbnbNumDisplay.innerText = newfeatures.length - numcount
 }
@@ -221,7 +239,7 @@ function setMap() {
       })
     ],
     view: new ol.View({
-      center: ol.proj.fromLonLat([centerX, centerY]),
+      center: ol.proj.fromLonLat([CENTERX, CENTERY]),
       zoom: 14.8
     })
   });
@@ -229,7 +247,7 @@ function setMap() {
   map.on('singleclick', function (event) {
     if (map.hasFeatureAtPixel(event.pixel) && map.getFeaturesAtPixel(event.pixel)[0].A.type === 'shop') {
       popupPresent = true
-      abbvPopup.innerText = ''
+      abbrPopup.innerText = ''
       let pointInfo = map.getFeaturesAtPixel(event.pixel)[0].A
       popupIndex = pointInfo.info.length - 1
       setContent(pointInfo)
@@ -242,14 +260,14 @@ function setMap() {
   map.on('pointermove', function (event) {
     if (!popupPresent && map.hasFeatureAtPixel(event.pixel) && map.getFeaturesAtPixel(event.pixel)[0].A.type === 'shop') {
       let pointInfo = map.getFeaturesAtPixel(event.pixel)[0].A
-      if (abbvPopup.innerText !== pointInfo.address) {
-        abbvPopup.style.top = event.originalEvent.pageY + 'px'
-        abbvPopup.style.left = event.originalEvent.pageX + 'px'
-        if (pointInfo.last_name === '') { abbvPopup.innerText = pointInfo.address_abbv }
-        else { abbvPopup.innerHTML = pointInfo.last_name }
+      if (abbrPopup.innerText !== pointInfo.address) {
+        abbrPopup.style.top = event.originalEvent.pageY + 'px'
+        abbrPopup.style.left = event.originalEvent.pageX + 'px'
+        if (pointInfo.last_name === '') { abbrPopup.innerText = pointInfo.address_abbr }
+        else { abbrPopup.innerHTML = pointInfo.last_name }
       }
     }
-    else { abbvPopup.innerText = '' }
+    else { abbrPopup.innerText = '' }
   })
 
   map.on('movestart', function (e) {
@@ -260,36 +278,31 @@ function setMap() {
     mapX = ol.proj.transform(map.getView().getCenter(), 'EPSG:3857', 'EPSG:4326')[0]
     mapY = ol.proj.transform(map.getView().getCenter(), 'EPSG:3857', 'EPSG:4326')[1]
 
-    if (mapX < 12.2915) { mapX = 12.2915 }
-    if (mapX > 12.379) { mapX = 12.379 }
-    if (mapY > 45.453) { mapY = 45.453 }
-    if (mapY < 45.412) { mapY = 45.412 }
+    if (mapX < WEST) { mapX = WEST }
+    if (mapX > EAST) { mapX = EAST }
+    if (mapY > NORTH) { mapY = NORTH }
+    if (mapY < SOUTH) { mapY = SOUTH }
 
     map.getView().setCenter(ol.proj.transform([mapX, mapY], 'EPSG:4326', 'EPSG:3857'));
 
-    if (map.getView().getZoom() < 14.5) {
-      map.getView().setZoom(14.5)
-      map.getView().setCenter(ol.proj.transform([centerX, centerY], 'EPSG:4326', 'EPSG:3857'));
+    if (map.getView().getZoom() < MINZOOM) {
+      map.getView().setZoom(MINZOOM)
+      map.getView().setCenter(ol.proj.transform([CENTERX, CENTERY], 'EPSG:4326', 'EPSG:3857'));
     }
-    if (map.getView().getZoom() > 25) {
-      map.getView().setZoom(25)
+    if (map.getView().getZoom() > MAXZOOM) {
+      map.getView().setZoom(MAXZOOM)
       map.getView().setCenter(ol.proj.transform([mapX, mapY], 'EPSG:4326', 'EPSG:3857'));
     }
   });
 
   overlay = new ol.Overlay({
-    element: container,
-    autoPan: true,
-    autoPanAnimation: {
-      duration: 250
-    }
+    element: container
   });
   map.addOverlay(overlay);
 }
 
-function addLayer() {
+function setStyles() {
   let colorkeys = Object.keys(colors)
-  let styles = {}
   for (let i = 0; i < colorkeys.length; i++) {
     let fill = new ol.style.Fill({
       color: 'rgba(255,255,255,0.4)'
@@ -302,7 +315,7 @@ function addLayer() {
       image: new ol.style.Circle({
         fill: fill,
         stroke: stroke,
-        radius: (colorkeys[i] !== "airbnb") ? radiusStyle : radiusStyle / 2
+        radius: (colorkeys[i] !== "airbnb") ? RADIUS : RADIUS / 2
       }),
       fill: fill,
       stroke: stroke
@@ -321,25 +334,27 @@ function addLayer() {
       image: new ol.style.Circle({
         fill: fill,
         stroke: stroke,
-        radius: radiusStyle
+        radius: RADIUS
       }),
       fill: fill,
       stroke: stroke
     })
   }
+}
+
+function addLayer() {
   for (let i = 0; i < newfeatures.length; i++) {
     if (newfeatures[i].A.type === "shop") {
-      let category = ""
       let categories = Object.keys(shopTypes)
       for (let j = 0; j < categories.length; j++) {
         if (shopTypes[categories[j]].includes(newfeatures[i].A.info[newfeatures[i].A.info.length - 1].store_type)) {
-          category = categories[j]
           if (newfeatures[i].A.info[newfeatures[i].A.info.length - 1].year_collected === parseInt(allYears[0])) {
-            category = category + "new"
+            newfeatures[i].setStyle(styles[categories[j] + "new"])
           }
+          else { newfeatures[i].setStyle(styles[categories[j]]) }
+          break;
         }
       }
-      newfeatures[i].setStyle(styles[category])
     }
     else {
       newfeatures[i].setStyle(styles['airbnb'])
@@ -358,7 +373,12 @@ function setContent(pointInfo) {
   content.innerHTML = ""
 
   let information = pointInfo.info
-
+  let informationPlusDeleted = []
+  for (let i = 0; i < dataWithDeleted.length; i++) {
+    if (pointInfo._id === dataWithDeleted[i]._id) {
+      informationPlusDeleted = dataWithDeleted[i].info
+    }
+  }
   let currInfo = information[popupIndex]
 
   const editButton = document.createElement("button");
@@ -369,10 +389,7 @@ function setContent(pointInfo) {
 
     const imagePreview = document.createElement("img")
     imagePreview.setAttribute("class", "imagePreview")
-    imagePreview.setAttribute("width", "200px")
-    imagePreview.setAttribute("height", "200px")
     imagePreview.setAttribute("src", currInfo.image_url)
-    content.appendChild(imagePreview)
     const imageInput = document.createElement("input")
     imageInput.setAttribute("type", "file")
     imageInput.setAttribute("accept", "image/png, image/jpeg")
@@ -380,6 +397,7 @@ function setContent(pointInfo) {
     imageInput.onchange = function () {
       imagePreview.setAttribute("src", URL.createObjectURL(imageInput.files[0]))
     }
+    content.appendChild(imagePreview)
     content.appendChild(imageInput)
     content.appendChild(document.createElement("br"))
 
@@ -421,8 +439,8 @@ function setContent(pointInfo) {
     const storeInput = document.createElement("select")
     storeInput.setAttribute("id", "storeInput")
     storeInput.setAttribute("name", "storeInput")
-    for (let i = 0; i < storesOptions2.length; i++) {
-      storeInput.add(storesOptions2[i])
+    for (let i = 0; i < storesOptionsCopy.length; i++) {
+      storeInput.add(storesOptionsCopy[i])
     }
     storeInput.value = currInfo.store_type
     inputGrid.appendChild(storeInput)
@@ -461,14 +479,14 @@ function setContent(pointInfo) {
 
     const cancelButton = document.createElement("button")
     cancelButton.innerText = "cancel"
-    cancelButton.classList.add("scrollButton")
+    cancelButton.classList.add("textButton")
     cancelButton.classList.add("leftButton")
     cancelButton.onclick = function () { setContent(pointInfo) }
     content.appendChild(cancelButton)
 
     const submitButton = document.createElement("button")
     submitButton.innerText = "submit"
-    submitButton.classList.add("scrollButton")
+    submitButton.classList.add("textButton")
     submitButton.classList.add("rightButton")
     submitButton.onclick = function () {
       if (isNaN(yearInput.value)) {
@@ -507,7 +525,7 @@ function setContent(pointInfo) {
                     parent_id: pointInfo.parent_id,
                     address: pointInfo.address,
                     address_street: pointInfo.address_street,
-                    info: information,
+                    info: informationPlusDeleted,
                     name: nameInput.value,
                     note: noteInput.value,
                     flagged: flagBox.checked,
@@ -515,7 +533,8 @@ function setContent(pointInfo) {
                     year: parseInt(yearInput.value, 10),
                     store: storeInput.value,
                     group: "Undefined",
-                    nace: "Undefined"
+                    nace: "Undefined",
+                    index: popupIndex
                   }
 
                   fetch("/edit", {
@@ -536,6 +555,7 @@ function setContent(pointInfo) {
                           })
                           .then(function (json) {
                             const nonDeleted = []
+                            dataWithDeleted = []
                             for (let i = 0; i < json.length; i++) {
                               let len = json[i].info.length
                               const newInfo = []
@@ -543,25 +563,23 @@ function setContent(pointInfo) {
                                 if (json[i].info[j].deleted) { len = len - 1 }
                                 else { newInfo.push(json[i].info[j]) }
                               }
-                              if (len === json[i].info.length) {
+                              if (len > 0) {
                                 const newInsert = json[i]
-                                newInsert.info2 = newInfo
-                                nonDeleted.push(newInsert)
-                              }
-                              else if (len > 0) {
-                                let newInsert = json[i]
                                 newInsert.info = newInfo
                                 newInsert.info2 = newInfo
                                 nonDeleted.push(newInsert)
+                                const newInsertPlusDeleted = json[i]
+                                newInsertPlusDeleted.info2 = newInsertPlusDeleted.info
+                                dataWithDeleted.push(newInsertPlusDeleted)
                               }
                             }
                             data = nonDeleted
-                            dataAll = JSON.parse(JSON.stringify(data))
+                            dataUnfiltered = JSON.parse(JSON.stringify(data))
                             return data
                           })
                           .then(function (data) {
+                            setBaselines()
                             setFeatures()
-                            setPopup()
                             addLayer()
                             setYearFilter()
                             setSestiereFilter()
@@ -589,7 +607,7 @@ function setContent(pointInfo) {
             parent_id: pointInfo.parent_id,
             address: pointInfo.address,
             address_street: pointInfo.address_street,
-            info: information,
+            info: informationPlusDeleted,
             name: nameInput.value,
             note: noteInput.value,
             flagged: flagBox.checked,
@@ -618,6 +636,7 @@ function setContent(pointInfo) {
                   })
                   .then(function (json) {
                     const nonDeleted = []
+                    dataWithDeleted = []
                     for (let i = 0; i < json.length; i++) {
                       let len = json[i].info.length
                       const newInfo = []
@@ -625,25 +644,23 @@ function setContent(pointInfo) {
                         if (json[i].info[j].deleted) { len = len - 1 }
                         else { newInfo.push(json[i].info[j]) }
                       }
-                      if (len === json[i].info.length) {
+                      if (len > 0) {
                         const newInsert = json[i]
-                        newInsert.info2 = newInfo
-                        nonDeleted.push(newInsert)
-                      }
-                      else if (len > 0) {
-                        let newInsert = json[i]
                         newInsert.info = newInfo
                         newInsert.info2 = newInfo
                         nonDeleted.push(newInsert)
+                        const newInsertPlusDeleted = json[i]
+                        newInsertPlusDeleted.info2 = newInsertPlusDeleted.info
+                        dataWithDeleted.push(newInsertPlusDeleted)
                       }
                     }
-                    data = nonDeleted
-                    dataAll = JSON.parse(JSON.stringify(data))
-                    return data
+                    dataFiltered = nonDeleted
+                    dataUnfiltered = JSON.parse(JSON.stringify(dataFiltered))
+                    return dataFiltered
                   })
                   .then(function (data) {
+                    setBaselines()
                     setFeatures()
-                    setPopup()
                     addLayer()
                     setYearFilter()
                     setSestiereFilter()
@@ -676,8 +693,6 @@ function setContent(pointInfo) {
 
     const imagePreview = document.createElement("img")
     imagePreview.setAttribute("class", "imagePreview")
-    imagePreview.setAttribute("width", "200px")
-    imagePreview.setAttribute("height", "200px")
     content.appendChild(imagePreview)
     const imageInput = document.createElement("input")
     imageInput.setAttribute("type", "file")
@@ -727,8 +742,8 @@ function setContent(pointInfo) {
     const storeInput = document.createElement("select")
     storeInput.setAttribute("id", "storeInput")
     storeInput.setAttribute("name", "storeInput")
-    for (let i = 0; i < storesOptions2.length; i++) {
-      storeInput.add(storesOptions2[i])
+    for (let i = 0; i < storesOptionsCopy.length; i++) {
+      storeInput.add(storesOptionsCopy[i])
     }
     storeInput.value = currInfo.store_type
     inputGrid.appendChild(storeInput)
@@ -766,14 +781,14 @@ function setContent(pointInfo) {
 
     const cancelButton = document.createElement("button")
     cancelButton.innerText = "cancel"
-    cancelButton.classList.add("scrollButton")
+    cancelButton.classList.add("textButton")
     cancelButton.classList.add("leftButton")
     cancelButton.onclick = function () { setContent(pointInfo) }
     content.appendChild(cancelButton)
 
     const submitButton = document.createElement("button")
     submitButton.innerText = "submit"
-    submitButton.classList.add("scrollButton")
+    submitButton.classList.add("textButton")
     submitButton.classList.add("rightButton")
     submitButton.onclick = function () {
       if (imageInput.files.length === 0) {
@@ -841,6 +856,7 @@ function setContent(pointInfo) {
                       })
                       .then(function (json) {
                         const nonDeleted = []
+                        dataWithDeleted = []
                         for (let i = 0; i < json.length; i++) {
                           let len = json[i].info.length
                           const newInfo = []
@@ -848,25 +864,23 @@ function setContent(pointInfo) {
                             if (json[i].info[j].deleted) { len = len - 1 }
                             else { newInfo.push(json[i].info[j]) }
                           }
-                          if (len === json[i].info.length) {
+                          if (len > 0) {
                             const newInsert = json[i]
-                            newInsert.info2 = newInfo
-                            nonDeleted.push(newInsert)
-                          }
-                          else if (len > 0) {
-                            let newInsert = json[i]
                             newInsert.info = newInfo
                             newInsert.info2 = newInfo
                             nonDeleted.push(newInsert)
+                            const newInsertPlusDeleted = json[i]
+                            newInsertPlusDeleted.info2 = newInsertPlusDeleted.info
+                            dataWithDeleted.push(newInsertPlusDeleted)
                           }
                         }
                         data = nonDeleted
-                        dataAll = JSON.parse(JSON.stringify(data))
+                        dataUnfiltered = JSON.parse(JSON.stringify(data))
                         return data
                       })
                       .then(function (data) {
+                        setBaselines()
                         setFeatures()
-                        setPopup()
                         addLayer()
                         setYearFilter()
                         setSestiereFilter()
@@ -899,8 +913,8 @@ function setContent(pointInfo) {
     loadingPopup()
     const addedJSON = {
       _id: pointInfo._id,
-      info: information,
-      index: popupIndex
+      info: informationPlusDeleted,
+      year: pointInfo.info[popupIndex].year_collected
     }
     fetch("/delete", {
       method: "POST",
@@ -918,6 +932,7 @@ function setContent(pointInfo) {
             })
             .then(function (json) {
               const nonDeleted = []
+              dataWithDeleted = []
               for (let i = 0; i < json.length; i++) {
                 let len = json[i].info.length
                 const newInfo = []
@@ -925,25 +940,23 @@ function setContent(pointInfo) {
                   if (json[i].info[j].deleted) { len = len - 1 }
                   else { newInfo.push(json[i].info[j]) }
                 }
-                if (len === json[i].info.length) {
+                if (len > 0) {
                   const newInsert = json[i]
-                  newInsert.info2 = newInfo
-                  nonDeleted.push(newInsert)
-                }
-                else if (len > 0) {
-                  let newInsert = json[i]
                   newInsert.info = newInfo
                   newInsert.info2 = newInfo
                   nonDeleted.push(newInsert)
+                  const newInsertPlusDeleted = json[i]
+                  newInsertPlusDeleted.info2 = newInsertPlusDeleted.info
+                  dataWithDeleted.push(newInsertPlusDeleted)
                 }
               }
-              data = nonDeleted
-              dataAll = JSON.parse(JSON.stringify(data))
-              return data
+              dataFiltered = nonDeleted
+              dataUnfiltered = JSON.parse(JSON.stringify(dataFiltered))
+              return dataFiltered
             })
             .then(function (data) {
+              setBaselines()
               setFeatures()
-              setPopup()
               addLayer()
               setYearFilter()
               setSestiereFilter()
@@ -1005,7 +1018,7 @@ function setContent(pointInfo) {
   const pastButton = document.createElement("button");
   pastButton.innerText = "Previous Entry";
   pastButton.classList.add("leftButton")
-  pastButton.classList.add('scrollButton');
+  pastButton.classList.add('textButton');
   pastButton.onclick = function () {
     if (popupIndex > 0) {
       popupIndex = popupIndex - 1
@@ -1022,7 +1035,7 @@ function setContent(pointInfo) {
   const futureButton = document.createElement("button");
   futureButton.innerText = "Next Entry";
   futureButton.classList.add("rightButton")
-  futureButton.classList.add('scrollButton');
+  futureButton.classList.add('textButton');
   futureButton.onclick = function () {
     if (popupIndex < information.length - 1) {
       popupIndex = popupIndex + 1
@@ -1041,7 +1054,7 @@ function gotoPosition(position) {
   const lat = position.coords.latitude
   const lng = position.coords.longitude
 
-  if (lng < 12.2915 || lng > 12.379 || lat > 45.453 || lat < 45.425) {
+  if (lng < WEST || lng > EAST || lat > NORTH || lat < SOUTH) {
     alert("Invalid Coordinates")
   }
   else {
@@ -1082,8 +1095,8 @@ function setGoToLocation() {
 function setGoHome() {
   const goHome = document.querySelector('#goHome')
   goHome.onclick = function () {
-    map.getView().setZoom(14.5)
-    map.getView().setCenter(ol.proj.transform([centerX, centerY], 'EPSG:4326', 'EPSG:3857'))
+    map.getView().setZoom(MINZOOM)
+    map.getView().setCenter(ol.proj.transform([CENTERX, CENTERY], 'EPSG:4326', 'EPSG:3857'))
   }
 }
 
@@ -1092,56 +1105,51 @@ function setDownload() {
   downloadButton.onclick = function () {
     var element = document.createElement('a');
 
-    let csvData = 'ID, Latitude, Longitude, Name, Number, Address, Sestiere, Year, Type, Category, Remained Next Time?, Changed?, First?, Tourist?, Mixed?, Resident?, Artisan?, Lodging?\n'
-    for (let i = 0; i < data.length; i++) {
-      if (data[i].info2.length !== 0) {
-        for (let j = 0; j < data[i].info.length; j++) {
-          const thisInfo = data[i].info[j]
-          csvData = csvData + data[i].parent_id + ', '
-            + data[i].lat + ', '
-            + data[i].lng + ', '
-            + String(thisInfo.store_name).split(',').join("") + ', '
-            + data[i].address_num + ', '
-            + String(data[i].address_street).split(',').join("") + ', '
-            + data[i].address_sestiere + ', '
-            + thisInfo.year_collected + ', '
-            + thisInfo.store_type + ', '
+    let csvData = 'ID,Latitude,Longitude,Name,Number,Address,Sestiere,Year,Type,Category,Remained Next Time?,Changed?,First?,Tourist?,Mixed?,Resident?,Artisan?,Lodging?\n'
+    for (let i = 0; i < dataFiltered.length; i++) {
+      if (dataFiltered[i].info2.length !== 0) {
+        for (let j = 0; j < dataFiltered[i].info.length; j++) {
+          const thisInfo = dataFiltered[i].info[j]
+          csvData = csvData + dataFiltered[i].parent_id + ','
+            + dataFiltered[i].lat + ','
+            + dataFiltered[i].lng + ','
+            + String(thisInfo.store_name).split(',').join("") + ','
+            + dataFiltered[i].address_num + ','
+            + String(dataFiltered[i].address_street).split(',').join("") + ','
+            + dataFiltered[i].address_sestiere + ','
+            + thisInfo.year_collected + ','
+            + thisInfo.store_type + ','
 
           const keys = Object.keys(shopTypes)
           for (let k = 0; k < keys.length; k++) {
             if (shopTypes[keys[k]].includes(thisInfo.store_type)) {
-              csvData = csvData + keys[k] + ', '
+              csvData = csvData + keys[k] + ','
             }
           }
 
-          if (j === data[i].info.length - 1) { csvData = csvData + 'N/A, ' }
-          else if (thisInfo.store_type === data[i].info[j + 1].store_type && thisInfo.store_type !== 'Closed') {
-            csvData = csvData + 'False, '
+          if (j === dataFiltered[i].info.length - 1) { csvData = csvData + 'N/A,' }
+          else if (thisInfo.store_type === dataFiltered[i].info[j + 1].store_type && thisInfo.store_type !== 'Closed') {
+            csvData = csvData + 'False,'
           }
-          else { csvData = csvData + 'True, ' }
+          else { csvData = csvData + 'True,' }
 
-          if (j !== 0 && data[i].info[j - 1].store_type !== thisInfo.store_type) {
-            csvData = csvData + 'True, '
+          if (j !== 0 && dataFiltered[i].info[j - 1].store_type !== thisInfo.store_type) {
+            csvData = csvData + 'True,'
           }
-          else { csvData = csvData + 'False, ' }
+          else { csvData = csvData + 'False,' }
 
-          if (j === 0) { csvData = csvData + 'True, ' }
-          else { csvData = csvData + 'False, ' }
+          if (j === 0) { csvData = csvData + 'True,' }
+          else { csvData = csvData + 'False,' }
 
           for (let k = 0; k < typesDatabase.length; k++) {
             if (typesDatabase[k].type === thisInfo.store_type) {
-              if (typesDatabase[k].category === "Tourist") {  csvData = csvData + 'True, False, False, '}
-              else if (typesDatabase[k].category === "Mixed") {  csvData = csvData + 'False, True, False, '}
-              else {  csvData = csvData + 'False, False, True, '}
+              if (typesDatabase[k].category === "Tourist") {  csvData = csvData + 'True,False,False,'}
+              else if (typesDatabase[k].category === "Mixed") {  csvData = csvData + 'False,True,False,'}
+              else {  csvData = csvData + 'False,False,True,'}
             }
           }
 
-          const artisanTypes = ['Mask', 'Bakery', 'Butcher', 'Pizzeria', 'Barber', 'Hair Salon', 'Jewelry Repair',
-            'Leather Repair', 'Masseuse', 'Nail Salon', 'Spa', 'Tailor', 'Tattoo and Piercing',
-            'Wedding', 'Antiques', 'Florist', 'Glass', 'Jewelry', 'Knives', 'Leather Goods',
-            'Pawn Shop', 'Woodwork', 'Picture Frames']
-          const lodgingTypes = ['Bed and Breakfast', 'Guest Houses', 'Hotel', 'Hotel with Restaurant', 'Hostel']
-          csvData = csvData + (artisanTypes.includes(thisInfo.store_type) ? 'True' : 'False') + ', '
+          csvData = csvData + (artisanTypes.includes(thisInfo.store_type) ? 'True' : 'False') + ','
             + (lodgingTypes.includes(thisInfo.store_type) ? 'True' : 'False') + '\n'
         }
       }
@@ -1257,16 +1265,14 @@ function setSettings() {
 
     const cancelButton = document.createElement("button")
     cancelButton.innerText = "cancel"
-    cancelButton.classList.add("scrollButton")
+    cancelButton.classList.add("textButton")
     cancelButton.classList.add("leftButton")
-    cancelButton.onclick = function () {
-      removePopup()
-    }
+    cancelButton.onclick = removePopup()
     content.appendChild(cancelButton)
 
     const submitButton = document.createElement("button")
     submitButton.innerText = "submit"
-    submitButton.classList.add("scrollButton")
+    submitButton.classList.add("textButton")
     submitButton.classList.add("rightButton")
     submitButton.onclick = function () {
       fetch("/settypes", {
@@ -1304,8 +1310,8 @@ function setAddLocation() {
     const sestiereInput = document.createElement("select")
     sestiereInput.setAttribute("id", "sestiereInput")
     sestiereInput.setAttribute("name", "sestiereInput")
-    for (let i = 0; i < sestiereOptions2.length; i++) {
-      sestiereInput.add(sestiereOptions2[i])
+    for (let i = 0; i < sestiereOptionsCopy.length; i++) {
+      sestiereInput.add(sestiereOptionsCopy[i])
     }
     content.appendChild(sestiereInput)
     content.appendChild(document.createElement("br"))
@@ -1368,7 +1374,7 @@ function setAddLocation() {
 
     const findCoords = document.createElement("button")
     findCoords.innerText = "Find Coordinates"
-    findCoords.classList.add("scrollButton")
+    findCoords.classList.add("textButton")
     findCoords.style.width = "150px"
     findCoords.onclick = function () {
       removePopup()
@@ -1384,7 +1390,7 @@ function setAddLocation() {
         map.on('singleclick', function (event) {
           if (map.hasFeatureAtPixel(event.pixel) && map.getFeaturesAtPixel(event.pixel)[0].A.type === 'shop') {
             popupPresent = true
-            abbvPopup.innerText = ''
+            abbrPopup.innerText = ''
             let pointInfo = map.getFeaturesAtPixel(event.pixel)[0].A
             popupIndex = pointInfo.info.length - 1
             setContent(pointInfo)
@@ -1403,8 +1409,6 @@ function setAddLocation() {
 
     const imagePreview = document.createElement("img")
     imagePreview.setAttribute("class", "imagePreview")
-    imagePreview.setAttribute("width", "200px")
-    imagePreview.setAttribute("height", "200px")
     content.appendChild(imagePreview)
     const imageInput = document.createElement("input")
     imageInput.setAttribute("type", "file")
@@ -1453,8 +1457,8 @@ function setAddLocation() {
     const storeInput = document.createElement("select")
     storeInput.setAttribute("id", "storeInput")
     storeInput.setAttribute("name", "storeInput")
-    for (let i = 0; i < storesOptions2.length; i++) {
-      storeInput.add(storesOptions2[i])
+    for (let i = 0; i < storesOptionsCopy.length; i++) {
+      storeInput.add(storesOptionsCopy[i])
     }
     inputGrid2.appendChild(storeInput)
     const clearStore = document.createElement("button")
@@ -1489,7 +1493,7 @@ function setAddLocation() {
 
     const cancelButton = document.createElement("button")
     cancelButton.innerText = "cancel"
-    cancelButton.classList.add("scrollButton")
+    cancelButton.classList.add("textButton")
     cancelButton.classList.add("leftButton")
     cancelButton.onclick = function () {
       removePopup()
@@ -1498,7 +1502,7 @@ function setAddLocation() {
 
     const submitButton = document.createElement("button")
     submitButton.innerText = "submit"
-    submitButton.classList.add("scrollButton")
+    submitButton.classList.add("textButton")
     submitButton.classList.add("rightButton")
     submitButton.onclick = function () {
       if (numberInput.value === "") {
@@ -1544,7 +1548,7 @@ function setAddLocation() {
               })
               .then(function (response) {
                 const addedJSON = {
-                  parent_id: dataAll.length + 1,
+                  parent_id: dataUnfiltered.length + 1,
                   street: streetInput.value,
                   sestiere: sestiereInput.value,
                   number: numberInput.value,
@@ -1576,6 +1580,7 @@ function setAddLocation() {
                         })
                         .then(function (json) {
                           const nonDeleted = []
+                          dataWithDeleted = []
                           for (let i = 0; i < json.length; i++) {
                             let len = json[i].info.length
                             const newInfo = []
@@ -1583,25 +1588,23 @@ function setAddLocation() {
                               if (json[i].info[j].deleted) { len = len - 1 }
                               else { newInfo.push(json[i].info[j]) }
                             }
-                            if (len === json[i].info.length) {
+                            if (len > 0) {
                               const newInsert = json[i]
-                              newInsert.info2 = newInfo
-                              nonDeleted.push(newInsert)
-                            }
-                            else if (len > 0) {
-                              let newInsert = json[i]
                               newInsert.info = newInfo
                               newInsert.info2 = newInfo
                               nonDeleted.push(newInsert)
+                              const newInsertPlusDeleted = json[i]
+                              newInsertPlusDeleted.info2 = newInsertPlusDeleted.info
+                              dataWithDeleted.push(newInsertPlusDeleted)
                             }
                           }
                           data = nonDeleted
-                          dataAll = JSON.parse(JSON.stringify(data))
+                          dataUnfiltered = JSON.parse(JSON.stringify(data))
                           return data
                         })
                         .then(function (data) {
+                          setBaselines()
                           setFeatures()
-                          setPopup()
                           addLayer()
                           setYearFilter()
                           setSestiereFilter()
@@ -1621,36 +1624,52 @@ function setAddLocation() {
   }
 }
 
+function setCheckboxHTML(name) {
+  return '<input class="checkbox" type="checkbox" id="' + name + 'box">'
+    + '<label for="' + name + 'box">' + name + '</label>'
+}
+
 function setCheckboxes() {
   const flagFilter = document.querySelector('#flagFilter')
-  flagFilter.innerHTML = '<input class="checkbox" type="checkbox" id="flaggedbox">'
-    + '<label for="flaggedbox">Flagged</label>'
-  const flaggedBox = document.querySelector('#flaggedbox')
+  flagFilter.innerHTML = setCheckboxHTML('Flagged')
+  const flaggedBox = document.querySelector('#Flaggedbox')
   flaggedBox.addEventListener("change", filterFeatures)
 
   const unflagFilter = document.querySelector('#unflagFilter')
-  unflagFilter.innerHTML = '<input class="checkbox" type="checkbox" id="unflaggedbox">'
-    + '<label for="unflaggedbox">Unflagged</label>'
-  const unflaggedBox = document.querySelector('#unflaggedbox')
+  unflagFilter.innerHTML = setCheckboxHTML('Unflagged')
+  const unflaggedBox = document.querySelector('#Unflaggedbox')
   unflaggedBox.addEventListener("change", filterFeatures)
 
   const openFilter = document.querySelector('#openFilter')
-  openFilter.innerHTML = '<input class="checkbox" type="checkbox" id="openbox">'
-    + '<label for="openbox">Open</label>'
-  const openBox = document.querySelector('#openbox')
+  openFilter.innerHTML = setCheckboxHTML('Open')
+  const openBox = document.querySelector('#Openbox')
   openBox.addEventListener("change", filterFeatures)
 
+  const touristFilter = document.querySelector('#touristFilter')
+  touristFilter.innerHTML = setCheckboxHTML('Tourist')
+  const touristBox = document.querySelector('#Touristbox')
+  touristBox.addEventListener("change", filterFeatures)
+
+  const residentFilter = document.querySelector('#residentFilter')
+  residentFilter.innerHTML = setCheckboxHTML('Resident')
+  const residentBox = document.querySelector('#Residentbox')
+  residentBox.addEventListener("change", filterFeatures)
+
+  const mixedFilter = document.querySelector('#mixedFilter')
+  mixedFilter.innerHTML = setCheckboxHTML('Mixed')
+  const mixedBox = document.querySelector('#Mixedbox')
+  mixedBox.addEventListener("change", filterFeatures)
+
   const shopsFilter = document.querySelector('#shopsFilter')
-  shopsFilter.innerHTML = '<input class="checkbox" type="checkbox" id="shopsbox" checked="True">'
-    + '<label for="shopsbox">Shops</label>'
-  const shopsBox = document.querySelector('#shopsbox')
+  shopsFilter.innerHTML = setCheckboxHTML('Shops')
+  const shopsBox = document.querySelector('#Shopsbox')
+  shopsBox.checked = true
   shopsBox.addEventListener("change", filterFeatures)
 
   const airbnbFilter = document.querySelector('#airbnbFilter')
-  airbnbFilter.innerHTML = '<input class="checkbox" type="checkbox" id="airbnbbox">'
-    + '<label for="airbnbbox">Airbnbs</label>'
-  const airbnbbox = document.querySelector('#airbnbbox')
-  airbnbbox.addEventListener("change", filterFeatures)
+  airbnbFilter.innerHTML = setCheckboxHTML('Airbnbs')
+  const airbnbsbox = document.querySelector('#Airbnbsbox')
+  airbnbsbox.addEventListener("change", filterFeatures)
 }
 
 function setYearFilter() {
@@ -1776,7 +1795,7 @@ function startTimelapse() {
       yearDisplay.innerText = allYearTargets[yearIndex]
       yearIndex = yearIndex + 1
       if (yearIndex === allYearTargets.length) { yearIndex = 0 }
-    }, 2000)
+    }, CYCLETIME)
   }
 }
 
@@ -1803,16 +1822,26 @@ function setChangeSize() {
   const changeSizeButton = document.querySelector('#changeSize')
   const changeSizeIcon = document.querySelector('#changeSizeImg')
   changeSizeButton.onclick = function () {
-    if (radiusStyle === 5) {
+    if (RADIUS === 5) {
       changeSizeIcon.src = "./assets/reduce.png"
-      radiusStyle = 15
+      RADIUS = 15
     }
     else {
       changeSizeIcon.src = "./assets/enlarge.png"
-      radiusStyle = 5
+      RADIUS = 5
     }
     filterFeatures()
   }
+}
+
+function marketFilter(shopType, targetCategories) {
+  for (let k = 0; k < typesDatabase.length; k++) {
+    if (typesDatabase[k].type === shopType) {
+      if (targetCategories.includes(typesDatabase[k].category)) { return true }
+      else { return false }
+    }
+  }
+  return false
 }
 
 function filterFeatures() {
@@ -1838,73 +1867,99 @@ function filterFeatures() {
     storeTargets.push(storeSelecting.selectedOptions[i].value)
   }
 
-  data = JSON.parse(JSON.stringify(dataAll))
-  airbnbData = JSON.parse(JSON.stringify(airbnbDataAll))
+  dataFiltered = JSON.parse(JSON.stringify(dataUnfiltered))
+  airbnbFiltered = JSON.parse(JSON.stringify(airbnbUnfiltered))
 
-  let flagged = document.querySelector('#flaggedbox')
-  let unflagged = document.querySelector('#unflaggedbox')
+  let flagged = document.querySelector('#Flaggedbox')
+  let unflagged = document.querySelector('#Unflaggedbox')
   if (flagged.checked) {
     unflagged.disabled = true
-    for (let i = 0; i < data.length; i++) {
-      data[i].info2 = data[i].info2.filter(item => item.flagged)
+    for (let i = 0; i < dataFiltered.length; i++) {
+      dataFiltered[i].info2 = dataFiltered[i].info2.filter(item => item.flagged)
     }
   }
   else { unflagged.disabled = false }
 
   if (unflagged.checked) {
     flagged.disabled = true
-    for (let i = 0; i < data.length; i++) {
-      data[i].info2 = data[i].info2.filter(item => !item.flagged)
+    for (let i = 0; i < dataFiltered.length; i++) {
+      dataFiltered[i].info2 = dataFiltered[i].info2.filter(item => !item.flagged)
     }
   }
   else { flagged.disabled = false }
 
-  let openOnly = document.querySelector('#openbox')
+  let openOnly = document.querySelector('#Openbox')
   if (openOnly.checked) {
-    for (let i = 0; i < data.length; i++) {
-      if (data[i].info2.length !== 0 && data[i].info2[data[i].info2.length - 1].store_type === 'Closed') {
-        data[i].info2 = []
+    for (let i = 0; i < dataFiltered.length; i++) {
+      if (dataFiltered[i].info2.length !== 0 && dataFiltered[i].info2[dataFiltered[i].info2.length - 1].store_type === 'Closed') {
+        dataFiltered[i].info2 = []
       }
     }
   }
 
-  let addShops = document.querySelector('#shopsbox')
-  if (!addShops.checked) {
-    for (let i = 0; i < data.length; i++) {
-      data[i].info2 = []
-    }
+  let touristOnly = document.querySelector('#Touristbox')
+  let residentOnly = document.querySelector('#Residentbox')
+  let mixedOnly = document.querySelector('#Mixedbox')
+  let markets = []
+  if (touristOnly.checked) { markets.push("Tourist") }
+  if (residentOnly.checked) { markets.push("Resident") }
+  if (mixedOnly.checked) { markets.push("Mixed") }
+  if (markets.length === 0) { markets = ["Tourist", "Resident", "Mixed"] }
+  for (let i = 0; i < dataFiltered.length; i++) {
+    dataFiltered[i].info2 = dataFiltered[i].info2.filter(item => marketFilter(item.store_type, markets))
   }
 
-  let addAirbnbs = document.querySelector('#airbnbbox')
+  let addShops = document.querySelector('#Shopsbox')
+  if (!addShops.checked) {
+    flagged.disabled = true
+    unflagged.disabled = true
+    openOnly.disabled = true
+    touristOnly.disabled = true
+    residentOnly.disabled = true
+    mixedOnly.disabled = true
+    for (let i = 0; i < dataFiltered.length; i++) {
+      dataFiltered[i].info2 = []
+    }
+  }
+  else {
+    flagged.disabled = false
+    unflagged.disabled = false
+    openOnly.disabled = false
+    touristOnly.disabled = false
+    residentOnly.disabled = false
+    mixedOnly.disabled = false
+  }
+
+  let addAirbnbs = document.querySelector('#Airbnbsbox')
   if (!addAirbnbs.checked) {
-    for (let i = 0; i < airbnbData.length; i++) {
-      airbnbData[i].years = []
+    for (let i = 0; i < airbnbFiltered.length; i++) {
+      airbnbFiltered[i].years = []
     }
   }
 
   if (yearTargets.length !== 0) {
-    for (let i = 0; i < data.length; i++) {
-      data[i].info2 = data[i].info2.filter(item => yearTargets.includes(String(item.year_collected)))
+    for (let i = 0; i < dataFiltered.length; i++) {
+      dataFiltered[i].info2 = dataFiltered[i].info2.filter(item => yearTargets.includes(String(item.year_collected)))
     }
-    for (let i = 0; i < airbnbData.length; i++) {
-      airbnbData[i].years = airbnbData[i].years.filter(item => yearTargets.includes(String(item)) || yearTargets.includes(String(item) + ' (Airbnb only)'))
+    for (let i = 0; i < airbnbFiltered.length; i++) {
+      airbnbFiltered[i].years = airbnbFiltered[i].years.filter(item => yearTargets.includes(String(item)) || yearTargets.includes(String(item) + ' (Airbnb only)'))
     }
   }
   if (sestiereTargets.length !== 0) {
-    for (let i = 0; i < data.length; i++) {
-      if (!sestiereTargets.includes(data[i].address_sestiere)) {
-        data[i].info2 = []
+    for (let i = 0; i < dataFiltered.length; i++) {
+      if (!sestiereTargets.includes(dataFiltered[i].address_sestiere)) {
+        dataFiltered[i].info2 = []
       }
     }
-    for (let i = 0; i < airbnbData.length; i++) {
-      if (!sestiereTargets.includes(airbnbData[i].address_sestiere)) {
-        airbnbData[i].years = []
+    for (let i = 0; i < airbnbFiltered.length; i++) {
+      if (!sestiereTargets.includes(airbnbFiltered[i].address_sestiere)) {
+        airbnbFiltered[i].years = []
       }
     }
   }
   if (storeTargets.length !== 0) {
-    for (let i = 0; i < data.length; i++) {
-      data[i].info2 = data[i].info2.filter(item => storeTargets.includes(item.store_type))
+    for (let i = 0; i < dataFiltered.length; i++) {
+      dataFiltered[i].info2 = dataFiltered[i].info2.filter(item => storeTargets.includes(item.store_type))
     }
   }
 
@@ -1926,6 +1981,7 @@ window.onload = function () {
       })
       .then(function (json) {
         const nonDeleted = []
+        dataWithDeleted = []
         for (let i = 0; i < json.length; i++) {
           let len = json[i].info.length
           const newInfo = []
@@ -1933,21 +1989,19 @@ window.onload = function () {
             if (json[i].info[j].deleted) { len = len - 1 }
             else { newInfo.push(json[i].info[j]) }
           }
-          if (len === json[i].info.length) {
-            const newInsert = json[i]
-            newInsert.info2 = newInfo
-            nonDeleted.push(newInsert)
-          }
-          else if (len > 0) {
+          if (len > 0) {
             const newInsert = json[i]
             newInsert.info = newInfo
             newInsert.info2 = newInfo
             nonDeleted.push(newInsert)
+            const newInsertPlusDeleted = json[i]
+            newInsertPlusDeleted.info2 = newInsertPlusDeleted.info
+            dataWithDeleted.push(newInsertPlusDeleted)
           }
         }
-        data = nonDeleted
-        dataAll = JSON.parse(JSON.stringify(data))
-        return data
+        dataFiltered = nonDeleted
+        dataUnfiltered = JSON.parse(JSON.stringify(dataFiltered))
+        return dataFiltered
       })
       .then(function (data) {
         fetch("/loadairbnb", {
@@ -1957,8 +2011,8 @@ window.onload = function () {
             return response.json()
           })
           .then(function (json) {
-            airbnbData = json
-            airbnbDataAll = JSON.parse(JSON.stringify(airbnbData))
+            airbnbFiltered = json
+            airbnbUnfiltered = JSON.parse(JSON.stringify(airbnbFiltered))
             return 0
           })
           .then(function (data) {
@@ -1977,6 +2031,7 @@ window.onload = function () {
                 setBaselines()
                 setFeatures()
                 setPopup()
+                setStyles()
                 addLayer()
                 setGoToLocation()
                 setGoHome()
