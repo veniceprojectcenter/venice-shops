@@ -1,19 +1,26 @@
+//Shops databases
 let dataFiltered
 let dataUnfiltered
 let dataWithDeleted
+//Airbnb databases
 let airbnbFiltered
 let airbnbUnfiltered
+//Shop type mapping databases
 let typesDatabase
 let typesDatabaseDefault = []
 
+//Current latitude and longitude of map
 let mapX
 let mapY
 
+//Reference to the text popup
 let abbrPopup = document.querySelector('#abbrPopup')
-var container = document.getElementById('popup');
-var content = document.getElementById('popup-content');
-var closer = document.getElementById('popup-closer');
+//References for the detail popups
+var container = document.getElementById('popup')
+var content = document.getElementById('popup-content')
+var closer = document.getElementById('popup-closer')
 var overlay
+//
 var popupIndex
 let popupPresent = false
 
