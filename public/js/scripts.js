@@ -1274,7 +1274,7 @@ function setSettings() {
     cancelButton.innerText = "cancel"
     cancelButton.classList.add("textButton")
     cancelButton.classList.add("leftButton")
-    cancelButton.onclick = removePopup()
+    cancelButton.onclick = function () { removePopup() }
     content.appendChild(cancelButton)
 
     const submitButton = document.createElement("button")
