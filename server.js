@@ -167,7 +167,7 @@ app.post("/delete", function(request, response) {
   .then(result => response.json(result));
 })
 
-app.post("/upload2", (req, res) => {
+app.post("/uploadLocal", (req, res) => {
   const fileName = req.files.myFile.name
   const path = __dirname + '/images/' + fileName
 

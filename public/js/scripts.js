@@ -20,22 +20,58 @@ var container = document.getElementById('popup')
 var content = document.getElementById('popup-content')
 var closer = document.getElementById('popup-closer')
 var overlay
-//
+//The index of the current entry within the corresponding location's 'info' array
 var popupIndex
 let popupPresent = false
 
+//Holds circles on the map
 let newfeatures = []
 
+//Globals to control the map display
 let map
 let layer
 let styles = {}
 
-const abbrs = {
+//Globals containing the options currently selected by the main filters
+let yearTargets = []
+let sestiereTargets = []
+let storeTargets = []
+
+//Timelapse management globals
+let timelapsing = false
+let paused = false
+let yearIndex = 0
+let timelapseInterval;
+let CYCLETIME = 2000
+
+//Arrays containing all possible options for years, sestiere, and shop types
+let allYears
+let allTypes
+let yearOptions
+let sestiereOptions
+let sestiereOptionsCopy
+let storesOptions
+let storesOptionsCopy
+
+//References to the main filters
+const yearFilterDefault = document.querySelector('#yearFilter').innerHTML
+const sestiereFilterDefault = document.querySelector('#sestiereFilter').innerHTML
+const storeFilterDefault = document.querySelector('#storeFilter').innerHTML
+//References to the shops number and airbnb number display
+const numDisplay = document.querySelector('#numberDisplay')
+const airbnbNumDisplay = document.querySelector('#airbnbNumberDisplay')
+
+//Default radius of circles
+let radius = 5
+
+//Abbreviations for each sestiere
+const ABBRS = {
   "Cannaregio": "CN", "Castello": "CS", "San Marco": "SM", "Dorsoduro": "DD",
   "San Polo": "SP", "Santa Croce": "SC", "Giudecca": "GD"
 }
 
-const shopTypes = {
+//Mapping of all shop types to super-categories
+const SHOPTYPES = {
   'Clothing Stores': ['Clothing', 'Costumes', "Children's Clothing", 'Gloves', "Men's Clothing", 'Shoes',
     'Undergarments', "Women's Clothing"],
   'Drug Stores': ['Cosmetics', 'Medical Goods', 'Pharmacy'],
@@ -60,56 +96,35 @@ const shopTypes = {
   'Other': ['Closed', 'Undefined', 'Radio and Television', 'Stall']
 }
 
-const colors = {
+//Mapping of super-categories to circle colors
+const COLORS = {
   "Clothing Stores": "#2E86C1", "Drug Stores": "#2E86C1", "Entertainment": "#8E44AD",
   "Food and Beverage": "#F39C12", "Grocery Stores & Supermarkets": "#F39C12",
   "Lodging": "#378805", "Restaurants & Bars": "#F39C12", "Services": "#99A3A4",
   "Specialty Stores": "#2E86C1", "Other": "#000000", "airbnb": "#C0392B"
 }
 
-const artisanTypes = [
-  'Mask', 'Bakery', 'Butcher', 'Pizzeria', 'Barber', 'Hair Salon', 'Jewelry Repair', 'Leather Repair', 'Masseuse', 
-  'Nail Salon', 'Spa', 'Tailor', 'Tattoo and Piercing', 'Wedding', 'Antiques', 'Florist', 'Glass', 'Jewelry', 
+//Constant determining what types are artisan
+const ARTISANTYPES = [
+  'Mask', 'Bakery', 'Butcher', 'Pizzeria', 'Barber', 'Hair Salon', 'Jewelry Repair', 'Leather Repair', 'Masseuse',
+  'Nail Salon', 'Spa', 'Tailor', 'Tattoo and Piercing', 'Wedding', 'Antiques', 'Florist', 'Glass', 'Jewelry',
   'Knives', 'Leather Goods', 'Pawn Shop', 'Woodwork', 'Picture Frames'
 ]
-const lodgingTypes = ['Bed and Breakfast', 'Guest Houses', 'Hotel', 'Hotel with Restaurant', 'Hostel']
 
-let yearTargets = []
-let sestiereTargets = []
-let storeTargets = []
+//Global contstants continued
+const MINZOOM = 14.8
+const MAXZOOM = 25
+const CENTERX = 12.34
+const CENTERY = 45.436
+const WEST = 12.2915
+const EAST = 12.379
+const NORTH = 45.453
+const SOUTH = 45.412
 
-let timelapsing = false
-let paused = false
-let yearIndex = 0
-let timelapseInterval;
-let CYCLETIME = 2000
-
-let allYears
-let allSestieres
-let allTypes
-let yearOptions
-let sestiereOptions
-let sestiereOptionsCopy
-let storesOptions
-let storesOptionsCopy
-
-const yearFilterDefault = document.querySelector('#yearFilter').innerHTML
-const sestiereFilterDefault = document.querySelector('#sestiereFilter').innerHTML
-const storeFilterDefault = document.querySelector('#storeFilter').innerHTML
-
-let RADIUS = 5
-let MINZOOM = 14.5
-let MAXZOOM = 25
-let CENTERX = 12.34
-let CENTERY = 45.436
-let WEST = 12.2915
-let EAST = 12.379
-let NORTH = 45.453
-let SOUTH = 45.412
-
+//Determines all years, sestiere, and types being used
 function setBaselines() {
+  //Resets globals so data is not duplicated when globals are repopulated
   allYears = []
-  allSestieres = []
   allTypes = []
   yearOptions = []
   sestiereOptions = []
@@ -117,24 +132,29 @@ function setBaselines() {
   storesOptions = []
   storesOptionsCopy = []
 
+  //Iterates over all shops locations
   for (let i = 0; i < dataUnfiltered.length; i++) {
+    //Iterates over all entries for each location
     for (let j = 0; j < dataUnfiltered[i].info.length; j++) {
       if (dataUnfiltered[i].info[j].year_collected !== "" && !allYears.includes(String(dataUnfiltered[i].info[j].year_collected))) {
+        //Adds the year of the entry to the set of all years if it is not there already
         allYears.push(String(dataUnfiltered[i].info[j].year_collected))
-      }
-      if (dataUnfiltered[i].address_sestiere !== "" && !allSestieres.includes(dataUnfiltered[i].address_sestiere)) {
-        allSestieres.push(dataUnfiltered[i].address_sestiere)
       }
     }
   }
+  //Iterates over all airbnb locations
   for (let i = 0; i < airbnbUnfiltered.length; i++) {
+    //Iterates over the set of years for each airbnb location
     for (let j = 0; j < airbnbUnfiltered[i].years.length; j++) {
       if (!allYears.includes(String(airbnbUnfiltered[i].years[j])) && !allYears.includes(String(airbnbUnfiltered[i].years[j]) + ' (Airbnb only)')) {
+        //Adds the year of the entry to the set of all years if it is not there already
+        //Years that exist in the airbnb database and not the shops database are entered with the tag '(Airbnb only)' 
         allYears.push(String(airbnbUnfiltered[i].years[j]) + ' (Airbnb only)')
       }
     }
   }
 
+  //Creates an 'option' html element for each year that the year filter can use 
   allYears = allYears.sort().reverse()
   for (let i = 0; i < allYears.length; i++) {
     const yearOpt = document.createElement('option')
@@ -142,7 +162,9 @@ function setBaselines() {
     yearOptions.push(yearOpt)
   }
 
-  let sestiereNames = allSestieres.sort()
+  //Creates an 'option' html element for each sestiere that the sestiere filter can use 
+  //Also creates a duplicate set of options for the dropdowns in the detail popups to use to avoid conflict
+  let sestiereNames = Object.keys(ABBRS).sort()
   for (let i = 0; i < sestiereNames.length; i++) {
     const sesOpt = document.createElement('option')
     sesOpt.value = sesOpt.text = sestiereNames[i]
@@ -152,8 +174,12 @@ function setBaselines() {
     sestiereOptionsCopy.push(sesOpt2)
   }
 
-  const keys = Object.keys(shopTypes)
+  //Grabs the name of each super-category
+  const keys = Object.keys(SHOPTYPES)
+  //Iterates over each of the super-categories
   for (let i = 0; i < keys.length; i++) {
+    //Creates an 'optgroup' element corresponding to each super-category
+    //Also creates a duplicate for the duplicate set of options
     const shopOptG = document.createElement('optgroup')
     shopOptG.label = keys[i]
     shopOptG.id = "red"
@@ -161,28 +187,38 @@ function setBaselines() {
     shopOptG2.label = keys[i]
     shopOptG2.id = "red"
 
-    for (let j = 0; j < shopTypes[keys[i]].length; j++) {
+    //Creates an 'option' (and a duplicate) for each type within the given super-category
+    //Adds the 'options' as children of the 'optgroups'
+    for (let j = 0; j < SHOPTYPES[keys[i]].length; j++) {
       const shopOpt = document.createElement('option')
-      shopOpt.value = shopOpt.text = shopTypes[keys[i]][j]
+      shopOpt.value = shopOpt.text = SHOPTYPES[keys[i]][j]
       shopOptG.appendChild(shopOpt)
 
       const shopOpt2 = document.createElement('option')
-      shopOpt2.value = shopOpt2.text = shopTypes[keys[i]][j]
+      shopOpt2.value = shopOpt2.text = SHOPTYPES[keys[i]][j]
       shopOptG2.appendChild(shopOpt2)
 
-      allTypes.push(shopTypes[keys[i]][j])
+      allTypes.push(SHOPTYPES[keys[i]][j])
     }
+    //Adds the populated 'optgroups' to the array of options for the shop type filter to use
     storesOptions.push(shopOptG)
     storesOptionsCopy.push(shopOptG2)
   }
 }
 
+//Transforms the shops and airbnb data into features that can be displayed on a map
 function setFeatures() {
+  //Resets the features
   newfeatures = []
   let numcount = 0
 
+  //Iterates over all airbnb data in the filtered database
   for (let i = 0; i < airbnbFiltered.length; i++) {
+    //Only creates features for airbnb locations with non-empty 'years' arrays
     if (airbnbFiltered[i].years.length > 0) {
+      //Creates a feature for every airbnb and appends it to the list of features
+      //Each feature stores its shape, the years that the airbnb existed for, the sestiere it's in,
+      //and an identifier that classifies it as an airbnb feature rather than a shops feature
       let next = new ol.Feature({
         geometry: new ol.geom.Point(ol.proj.fromLonLat([airbnbFiltered[i].lng, airbnbFiltered[i].lat])),
         years: airbnbFiltered[i].years,
@@ -192,41 +228,52 @@ function setFeatures() {
       newfeatures.push(next)
     }
   }
+  //Iterates over all shops data in the filtered database
   for (let i = 0; i < dataFiltered.length; i++) {
+    //Only creates features for shops with non-empty 'info2' arrays
     if (dataFiltered[i].info2.length !== 0) {
+      //Creates a feature for every shop and appends it to the list of features
+      //Each feature stores its shape, the id that corresponds to the point in the MongoDB database,
+      //the address, the parent_id (the id that connects locations to entries), the name that the store
+      //had in the most recent entry, an array of data about each entry, and an identifier that 
+      //classifies it as a shops feature rather than an airbnb feature
       let next = new ol.Feature({
         geometry: new ol.geom.Point(ol.proj.fromLonLat([dataFiltered[i].lng, dataFiltered[i].lat])),
         _id: dataFiltered[i]._id,
         address: dataFiltered[i]["address_sestiere"] + " " + dataFiltered[i]["address_num"],
         address_street: dataFiltered[i]["address_street"],
-        address_abbr: abbrs[dataFiltered[i]["address_sestiere"]] + " " + dataFiltered[i]["address_num"],
+        address_abbr: ABBRS[dataFiltered[i]["address_sestiere"]] + " " + dataFiltered[i]["address_num"],
         parent_id: dataFiltered[i].parent_id,
         last_name: dataFiltered[i].info[dataFiltered[i].info.length - 1].store_name,
         info: dataFiltered[i].info,
         type: "shop"
       })
-      numcount = numcount + 1 
       newfeatures.push(next)
+      //Counter that increments once for each shop added to the array
+      numcount = numcount + 1
     }
   }
 
-  const numDisplay = document.querySelector('#numberDisplay')
-  const airbnbNumDisplay = document.querySelector('#airbnbNumberDisplay')
+  //Updates the number displays to reflect the number of features created
   numDisplay.innerText = numcount
   airbnbNumDisplay.innerText = newfeatures.length - numcount
 }
 
+//Function to close the detail popup
 function removePopup() {
   popupPresent = false
+  //Resets the types database to its default (default is changed if a change to the database is submitted)
   typesDatabase = JSON.parse(JSON.stringify(typesDatabaseDefault))
   overlay.setPosition(undefined);
   closer.blur();
 }
 
+//Function to replace the details on a popup with a 'Loading' message
 function loadingPopup() {
   content.innerHTML = "<h1>Loading...</h1>"
 }
 
+//Defines more properties of the popup
 function setPopup() {
   closer.onclick = function () {
     removePopup()
@@ -234,7 +281,9 @@ function setPopup() {
   };
 }
 
+//Creates the map and centers and zooms on Venice
 function setMap() {
+  //Creates the map object, uses minimalist mapbox map, uses global constants to determine center and zoom
   map = new ol.Map({
     target: 'map',
     controls: ol.control.defaults({ attribution: false }),
@@ -247,101 +296,142 @@ function setMap() {
     ],
     view: new ol.View({
       center: ol.proj.fromLonLat([CENTERX, CENTERY]),
-      zoom: 14.8
+      zoom: MINZOOM
     })
   });
 
+  //Click event listener
   map.on('singleclick', function (event) {
+    //Checks if there is a circle at the clicked location that represents a shop
     if (map.hasFeatureAtPixel(event.pixel) && map.getFeaturesAtPixel(event.pixel)[0].A.type === 'shop') {
       popupPresent = true
       abbrPopup.innerText = ''
+      //Grabs the information from the feature
       let pointInfo = map.getFeaturesAtPixel(event.pixel)[0].A
+      //Sets the global index to the index of the most recent entry
       popupIndex = pointInfo.info.length - 1
+      //Populates the detail popup with info from the feature
       setContent(pointInfo)
-
-      overlay.setOffset([-200, -300])
-      overlay.setPosition(ol.proj.transform([mapX, mapY], 'EPSG:4326', 'EPSG:3857'))
-    } else { removePopup() }
+    }
+    else {
+      //Removes the popup if there is not a shops feature at the clicked location
+      //Does nothing if there is no popup currently being displayed
+      removePopup()
+    }
   });
 
+  //Moving the cursor event listener
   map.on('pointermove', function (event) {
+    //If there is not a popup being displayed, checks if there is a circle at the location 
+    //of the cursor that represents a shop
     if (!popupPresent && map.hasFeatureAtPixel(event.pixel) && map.getFeaturesAtPixel(event.pixel)[0].A.type === 'shop') {
+      //Grabs the information from the feature
       let pointInfo = map.getFeaturesAtPixel(event.pixel)[0].A
+      //Only changes the content of the abbreviation popup if the feature is different than
+      //it was when last checked
       if (abbrPopup.innerText !== pointInfo.address) {
+        //Sets the position of the abbreviation popup (just a line of text, no background)
+        //to the position of the cursor
         abbrPopup.style.top = event.originalEvent.pageY + 'px'
         abbrPopup.style.left = event.originalEvent.pageX + 'px'
-        if (pointInfo.last_name === '') { abbrPopup.innerText = pointInfo.address_abbr }
-        else { abbrPopup.innerHTML = pointInfo.last_name }
+        //Sets the abbreviation popup text to the last name if it exists, sets it to the
+        //abbreviated address otherwise
+        abbrPopup.innerText = (pointInfo.last_name === '') ? pointInfo.address_abbr : pointInfo.last_name
       }
     }
-    else { abbrPopup.innerText = '' }
+    else {
+      //Removes the text of the abbreviation popup if there is not a valid feature at the cursor
+      abbrPopup.innerText = ''
+    }
   })
 
+  //Start moving or scrolling map event listener
   map.on('movestart', function (e) {
     removePopup()
   })
 
+  //Finish moving or scrolling map event listener
   map.on('moveend', function (e) {
+    //Stores the location of the center of the map globally
     mapX = ol.proj.transform(map.getView().getCenter(), 'EPSG:3857', 'EPSG:4326')[0]
     mapY = ol.proj.transform(map.getView().getCenter(), 'EPSG:3857', 'EPSG:4326')[1]
 
+    //Binds the boundries of the map to the general boundries of the historical city of Venice
     if (mapX < WEST) { mapX = WEST }
     if (mapX > EAST) { mapX = EAST }
     if (mapY > NORTH) { mapY = NORTH }
     if (mapY < SOUTH) { mapY = SOUTH }
 
+    //Moves the map to the new location if recentering was necessary
     map.getView().setCenter(ol.proj.transform([mapX, mapY], 'EPSG:4326', 'EPSG:3857'));
 
+    //Binds the zoom of the map to reasonable levels
     if (map.getView().getZoom() < MINZOOM) {
       map.getView().setZoom(MINZOOM)
       map.getView().setCenter(ol.proj.transform([CENTERX, CENTERY], 'EPSG:4326', 'EPSG:3857'));
     }
     if (map.getView().getZoom() > MAXZOOM) {
       map.getView().setZoom(MAXZOOM)
-      map.getView().setCenter(ol.proj.transform([mapX, mapY], 'EPSG:4326', 'EPSG:3857'));
     }
   });
 
+  //Defines the overlay used by the detail popup
   overlay = new ol.Overlay({
     element: container
   });
   map.addOverlay(overlay);
 }
 
+//Establishes the dictionary of possible styles that points can have
 function setStyles() {
-  let colorkeys = Object.keys(colors)
+  //Grabs and iterates over the names of all super-categories and 'airbnb'
+  let colorkeys = Object.keys(COLORS)
   for (let i = 0; i < colorkeys.length; i++) {
+    //Essentially transparent fill
     let fill = new ol.style.Fill({
       color: 'rgba(255,255,255,0.4)'
     });
+    //Creates a 'stroke' object to set the color of a circle to the corresponding color in the 'COLORS' dict
     let stroke = new ol.style.Stroke({
-      color: colors[colorkeys[i]],
+      color: COLORS[colorkeys[i]],
       width: 1.75
     });
+    //Creates a new style with the previously defined properties
+    //Uses the 'radius' global to determine the radius for shops, half of 'radius' otherwise
+    //Stores the style in the 'styles' global dict, key is the name of the super-category
     styles[colorkeys[i]] = new ol.style.Style({
       image: new ol.style.Circle({
         fill: fill,
         stroke: stroke,
-        radius: (colorkeys[i] !== "airbnb") ? RADIUS : RADIUS / 2
+        radius: (colorkeys[i] !== "airbnb") ? radius : radius / 2
       }),
       fill: fill,
       stroke: stroke
     })
   }
+  //Iterates over the names of all super-categories again, this time to establish the styles of points
+  //collected in the most recent year
   for (let i = 0; i < colorkeys.length; i++) {
+    //Creates a fill with the same color as the circle
     let fill = new ol.style.Fill({
-      color: colors[colorkeys[i]]
+      color: COLORS[colorkeys[i]]
     });
+    //Makes the fill color slightly transparent
     fill.setColor(fill.getColor() + '80')
+    //Creates a 'stroke' object to set the color of a circle to the corresponding color in the 'COLORS' dict
     let stroke = new ol.style.Stroke({
-      color: colors[colorkeys[i]],
+      color: COLORS[colorkeys[i]],
       width: 1.75
     });
+    //Creates a new style with the previously defined properties
+    //Uses the 'radius' global to determine the radius
+    //Stores the style in the 'styles' global dict, key is the name of the 
+    //super-category with 'new' appended to the end
     styles[colorkeys[i] + 'new'] = new ol.style.Style({
       image: new ol.style.Circle({
         fill: fill,
         stroke: stroke,
-        radius: RADIUS
+        radius: radius
       }),
       fill: fill,
       stroke: stroke
@@ -349,12 +439,20 @@ function setStyles() {
   }
 }
 
+//Populates the map with features
 function addLayer() {
+  //Iterates over all features
   for (let i = 0; i < newfeatures.length; i++) {
+    //Handles shops features
     if (newfeatures[i].A.type === "shop") {
-      let categories = Object.keys(shopTypes)
+      let categories = Object.keys(SHOPTYPES)
+      //Iterates over all super-categories to determine super-category of a given shop
       for (let j = 0; j < categories.length; j++) {
-        if (shopTypes[categories[j]].includes(newfeatures[i].A.info[newfeatures[i].A.info.length - 1].store_type)) {
+        //Checks if the most recent entry for the shop matches each super-category
+        if (SHOPTYPES[categories[j]].includes(newfeatures[i].A.info[newfeatures[i].A.info.length - 1].store_type)) {
+          //Sets the style of the feature based on the super-category
+          //Checks if the most recent entry for the location was in the most recent year, uses
+          //the filled style if so, normal style otherwise
           if (newfeatures[i].A.info[newfeatures[i].A.info.length - 1].year_collected === parseInt(allYears[0])) {
             newfeatures[i].setStyle(styles[categories[j] + "new"])
           }
@@ -364,39 +462,53 @@ function addLayer() {
       }
     }
     else {
+      //Uses the 'airbnb' style for all non-shop features
       newfeatures[i].setStyle(styles['airbnb'])
     }
   }
 
+  //Creates a data layer to display all features
   layer = new ol.layer.Vector({
     source: new ol.source.Vector({
       features: newfeatures
     })
   });
+  //Adds the populated layer to the map
   map.addLayer(layer);
 }
 
+//Populates the detail popup
 function setContent(pointInfo) {
+  //Clears the content of the popup
   content.innerHTML = ""
 
+  //Grabs the 'info' array from the selected location
   let information = pointInfo.info
+  //Grabs the 'info' array that corresponds to the location's data in the 'dataWithDeleted' array
+  //to ensure that entries marked for deletion are not overwritten when changes are submitted
   let informationPlusDeleted = []
   for (let i = 0; i < dataWithDeleted.length; i++) {
     if (pointInfo._id === dataWithDeleted[i]._id) {
       informationPlusDeleted = dataWithDeleted[i].info
     }
   }
+  //Stores the element of the 'info' array specified by the global index
   let currInfo = information[popupIndex]
 
+  //Creates an 'edit' button in the top corner of the popup, adds the pencil icon
   const editButton = document.createElement("button");
   editButton.classList.add('outerIcon')
   editButton.innerHTML = '<img class="icons" src="./assets/pencil.png"/>'
+  //Button press event listener
   editButton.onclick = function () {
+    //Clears the content of the popup
     content.innerHTML = ""
 
+    //Displays the picture associate with the entry
     const imagePreview = document.createElement("img")
     imagePreview.setAttribute("class", "imagePreview")
     imagePreview.setAttribute("src", currInfo.image_url)
+    //Creates an input to allow new images to be submitted
     const imageInput = document.createElement("input")
     imageInput.setAttribute("type", "file")
     imageInput.setAttribute("accept", "image/png, image/jpeg")
@@ -408,9 +520,11 @@ function setContent(pointInfo) {
     content.appendChild(imageInput)
     content.appendChild(document.createElement("br"))
 
+    //Creates a grid to standardize the format of the subsequent inputs
     const inputGrid = document.createElement("div")
     inputGrid.classList.add("inputGrid")
 
+    //Creates a label, input, and clear button for the name of the entry
     const nameLabel = document.createElement("label")
     nameLabel.setAttribute("for", "nameInput")
     nameLabel.innerText = "Name:"
@@ -418,6 +532,7 @@ function setContent(pointInfo) {
     const nameInput = document.createElement("input")
     nameInput.setAttribute("id", "nameInput")
     nameInput.setAttribute("name", "nameInput")
+    //Input defaults to current value of name
     nameInput.value = currInfo.store_name
     inputGrid.appendChild(nameInput)
     const clearName = document.createElement("button")
@@ -425,6 +540,7 @@ function setContent(pointInfo) {
     clearName.onclick = function () { nameInput.value = "" }
     inputGrid.appendChild(clearName)
 
+    //Creates a label, input, and clear button for the year of the entry
     const yearLabel = document.createElement("label")
     yearLabel.setAttribute("for", "yearInput")
     yearLabel.innerText = "Year:"
@@ -432,6 +548,7 @@ function setContent(pointInfo) {
     const yearInput = document.createElement("input")
     yearInput.setAttribute("id", "yearInput")
     yearInput.setAttribute("name", "yearInput")
+    //Input defaults to current value of year
     yearInput.value = currInfo.year_collected
     inputGrid.appendChild(yearInput)
     const clearYear = document.createElement("button")
@@ -439,6 +556,7 @@ function setContent(pointInfo) {
     clearYear.onclick = function () { yearInput.value = "" }
     inputGrid.appendChild(clearYear)
 
+    //Creates a label, dropdown, and clear button for the type of the entry
     const storeLabel = document.createElement("label")
     storeLabel.setAttribute("for", "storeInput")
     storeLabel.innerText = "Type:"
@@ -446,16 +564,20 @@ function setContent(pointInfo) {
     const storeInput = document.createElement("select")
     storeInput.setAttribute("id", "storeInput")
     storeInput.setAttribute("name", "storeInput")
+    //Adds each option from the copy of the store type options array 
     for (let i = 0; i < storesOptionsCopy.length; i++) {
       storeInput.add(storesOptionsCopy[i])
     }
+    //Dropdown defaults to current value of store type
     storeInput.value = currInfo.store_type
     inputGrid.appendChild(storeInput)
     const clearStore = document.createElement("button")
     clearStore.innerText = "Clear"
+    //Clear button sets type to 'Closed'
     clearStore.onclick = function () { storeInput.value = "Closed" }
     inputGrid.appendChild(clearStore)
 
+    //Creates a label, input, and clear button for the note of the entry
     const noteLabel = document.createElement("label")
     noteLabel.setAttribute("for", "noteInput")
     noteLabel.innerText = "Note:"
@@ -463,14 +585,17 @@ function setContent(pointInfo) {
     const noteInput = document.createElement("input")
     noteInput.setAttribute("id", "noteInput")
     noteInput.setAttribute("name", "noteInput")
+    //Input defaults to current value of note
     noteInput.value = currInfo.note
     inputGrid.appendChild(noteInput)
     const clearNote = document.createElement("button")
     clearNote.innerText = "Clear"
     clearNote.onclick = function () { noteInput.value = "" }
     inputGrid.appendChild(clearNote)
+    //Adds the grid to the popup
     content.appendChild(inputGrid)
 
+    //Creates a checkbox to allow entries to be flagged
     const flagLabel = document.createElement("label")
     flagLabel.setAttribute("for", "flagbox")
     flagLabel.innerText = "Flagged"
@@ -479,23 +604,30 @@ function setContent(pointInfo) {
     flagBox.setAttribute("type", "checkbox")
     flagBox.setAttribute("id", "flagbox")
     flagBox.setAttribute("name", "flagBox")
+    //Checkbox is already checked if the entry was flagged before the button was pressed, unchecked otherwise
     flagBox.checked = currInfo.flagged
     content.appendChild(flagBox)
     content.appendChild(document.createElement("br"))
     content.appendChild(document.createElement("br"))
 
+    //Creates a button to cancel all edits
     const cancelButton = document.createElement("button")
     cancelButton.innerText = "cancel"
     cancelButton.classList.add("textButton")
     cancelButton.classList.add("leftButton")
+    //Button press event listener, repopulates the popup with the entry's information
     cancelButton.onclick = function () { setContent(pointInfo) }
     content.appendChild(cancelButton)
 
+    //Creates a button to submit all edits
     const submitButton = document.createElement("button")
     submitButton.innerText = "submit"
     submitButton.classList.add("textButton")
     submitButton.classList.add("rightButton")
+    //Button press event listener
     submitButton.onclick = function () {
+      //Does not submit the edit if a number is not entered in the 'Year Collected' input or the 
+      //entry is flagged but no note is provided 
       if (isNaN(yearInput.value)) {
         alert("Year Collected must be a number")
       }
@@ -503,21 +635,27 @@ function setContent(pointInfo) {
         alert("A flagged entry requires a note")
       }
       else {
+        //Displays a loading message while the edit is submitted and the points are regrabbed
         loadingPopup()
+        //Enters the image upload process if an image is included in the edit
         if (imageInput.files.length !== 0) {
+          //Creates a new form for image submission, populates with the inputted image
           const formData = new FormData()
           formData.append('myFile', imageInput.files[0])
-          fetch("/upload2", {
+          //Calls the '/uploadLocal' method
+          fetch("/uploadLocal", {
             method: "POST",
             body: formData
           })
             .then(response => response.json())
             .then(data => {
+              //Object to facilitate Google Drive upload
               const imgUpload = {
                 imgName: yearInput.value + pointInfo.address,
                 parents: "",
                 imgsrc: data.path
               }
+              //Calls '/upload' method
               fetch("/upload", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -527,6 +665,7 @@ function setContent(pointInfo) {
                   return response.json()
                 })
                 .then(function (response) {
+                  //All information needed to update the entry
                   const addedJSON = {
                     _id: pointInfo._id,
                     parent_id: pointInfo.parent_id,
@@ -543,17 +682,19 @@ function setContent(pointInfo) {
                     nace: "Undefined",
                     index: popupIndex
                   }
-
+                  //Calls '/edit' method
                   fetch("/edit", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(addedJSON)
                   })
                     .then(function () {
+                      //Saves the id of the location to allow the popup to be found and displayed
+                      //after data is regrabbed from Mongodb
                       const savedId = pointInfo._id
-                      let savedInfo;
                       const editing = new Promise((request, response) => {
                         map.removeLayer(layer)
+                        //Calls '/load' method
                         fetch("/load", {
                           method: "GET"
                         })
@@ -561,45 +702,51 @@ function setContent(pointInfo) {
                             return response.json()
                           })
                           .then(function (json) {
-                            const nonDeleted = []
+                            //Clears the shops databases
+                            dataFiltered = []
                             dataWithDeleted = []
+                            //Iterates over every location grabbed from MongoDB
                             for (let i = 0; i < json.length; i++) {
-                              let len = json[i].info.length
+                              //Grabs all entries from the location that have not been marked for deletion
                               const newInfo = []
                               for (let j = 0; j < json[i].info.length; j++) {
-                                if (json[i].info[j].deleted) { len = len - 1 }
-                                else { newInfo.push(json[i].info[j]) }
+                                if (!json[i].info[j].deleted) { newInfo.push(json[i].info[j]) }
                               }
-                              if (len > 0) {
+                              //Adds the data to the shops databases
+                              if (newInfo.length > 0) {
+                                //Adds the location with its non-deleted entries to dataFiltered
                                 const newInsert = json[i]
                                 newInsert.info = newInfo
+                                //Creates a duplicate of the 'info' object for filtering purposes
                                 newInsert.info2 = newInfo
-                                nonDeleted.push(newInsert)
+                                dataFiltered.push(newInsert)
+                                //Adds the location with its deleted and non-deleted entries to dataWithDeleted
                                 const newInsertPlusDeleted = json[i]
-                                newInsertPlusDeleted.info2 = newInsertPlusDeleted.info
                                 dataWithDeleted.push(newInsertPlusDeleted)
                               }
                             }
-                            data = nonDeleted
-                            dataUnfiltered = JSON.parse(JSON.stringify(data))
-                            return data
+                            //Copies dataFiltered to dataUnfiltered
+                            dataUnfiltered = JSON.parse(JSON.stringify(dataFiltered))
+                            return 0
                           })
-                          .then(function (data) {
+                          .then(function () {
+                            //Call all functions necessary to reflect changes and redisplay the data
                             setBaselines()
                             setFeatures()
-                            addLayer()
                             setYearFilter()
-                            setSestiereFilter()
                             setStoreFilter()
                             filterFeatures()
                             return 0
                           })
                           .then(function () {
+                            //Finds the location that was just edited
                             for (let i = 0; i < newfeatures.length; i++) {
-                              if (newfeatures[i].A._id === savedId)
-                                savedInfo = newfeatures[i].A
+                              if (newfeatures[i].A._id === savedId) {
+                                //Repopulates the detail popup with the newly edited entry
+                                setContent(newfeatures[i].A)
+                                break
+                              }
                             }
-                            setContent(savedInfo)
                             return 0
                           })
                       })
@@ -609,6 +756,8 @@ function setContent(pointInfo) {
             })
         }
         else {
+          //Skips the image upload process if no image is added to the edit
+          //Stores all necessary info for an edit
           const addedJSON = {
             _id: pointInfo._id,
             parent_id: pointInfo.parent_id,
@@ -624,17 +773,19 @@ function setContent(pointInfo) {
             group: "Undefined",
             nace: "Undefined"
           }
-
+          //Calls '/edit' method
           fetch("/edit", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(addedJSON)
           })
             .then(function () {
+              //Saves the id of the location to allow the popup to be found and displayed
+              //after data is regrabbed from Mongodb
               const savedId = pointInfo._id
-              let savedInfo;
               const editing = new Promise((request, response) => {
                 map.removeLayer(layer)
+                //Calls '/load' method
                 fetch("/load", {
                   method: "GET"
                 })
@@ -642,45 +793,51 @@ function setContent(pointInfo) {
                     return response.json()
                   })
                   .then(function (json) {
-                    const nonDeleted = []
+                    //Clears the shops databases
+                    dataFiltered = []
                     dataWithDeleted = []
+                    //Iterates over every location grabbed from MongoDB
                     for (let i = 0; i < json.length; i++) {
-                      let len = json[i].info.length
+                      //Grabs all entries from the location that have not been marked for deletion
                       const newInfo = []
                       for (let j = 0; j < json[i].info.length; j++) {
-                        if (json[i].info[j].deleted) { len = len - 1 }
-                        else { newInfo.push(json[i].info[j]) }
+                        if (!json[i].info[j].deleted) { newInfo.push(json[i].info[j]) }
                       }
-                      if (len > 0) {
+                      //Adds the data to the shops databases
+                      if (newInfo.length > 0) {
+                        //Adds the location with its non-deleted entries to dataFiltered
                         const newInsert = json[i]
                         newInsert.info = newInfo
+                        //Creates a duplicate of the 'info' object for filtering purposes
                         newInsert.info2 = newInfo
-                        nonDeleted.push(newInsert)
+                        dataFiltered.push(newInsert)
+                        //Adds the location with its deleted and non-deleted entries to dataWithDeleted
                         const newInsertPlusDeleted = json[i]
-                        newInsertPlusDeleted.info2 = newInsertPlusDeleted.info
                         dataWithDeleted.push(newInsertPlusDeleted)
                       }
                     }
-                    dataFiltered = nonDeleted
+                    //Copies dataFiltered to dataUnfiltered
                     dataUnfiltered = JSON.parse(JSON.stringify(dataFiltered))
-                    return dataFiltered
+                    return 0
                   })
-                  .then(function (data) {
+                  .then(function () {
+                    //Call all functions necessary to reflect changes and redisplay the data
                     setBaselines()
                     setFeatures()
-                    addLayer()
                     setYearFilter()
-                    setSestiereFilter()
                     setStoreFilter()
                     filterFeatures()
                     return 0
                   })
                   .then(function () {
+                    //Finds the location that was just edited
                     for (let i = 0; i < newfeatures.length; i++) {
-                      if (newfeatures[i].A._id === savedId)
-                        savedInfo = newfeatures[i].A
+                      if (newfeatures[i].A._id === savedId) {
+                        //Repopulates the detail popup with the newly edited entry
+                        setContent(newfeatures[i].A)
+                        break
+                      }
                     }
-                    setContent(savedInfo)
                     return 0
                   })
               })
@@ -811,7 +968,7 @@ function setContent(pointInfo) {
         loadingPopup()
         const formData = new FormData()
         formData.append('myFile', imageInput.files[0])
-        fetch("/upload2", {
+        fetch("/uploadLocal", {
           method: "POST",
           body: formData
         })
@@ -853,7 +1010,6 @@ function setContent(pointInfo) {
                 })
                   .then(function (response) {
                     const savedId = pointInfo._id
-                    let savedInfo;
                     map.removeLayer(layer)
                     fetch("/load", {
                       method: "GET"
@@ -877,7 +1033,6 @@ function setContent(pointInfo) {
                             newInsert.info2 = newInfo
                             nonDeleted.push(newInsert)
                             const newInsertPlusDeleted = json[i]
-                            newInsertPlusDeleted.info2 = newInsertPlusDeleted.info
                             dataWithDeleted.push(newInsertPlusDeleted)
                           }
                         }
@@ -897,11 +1052,13 @@ function setContent(pointInfo) {
                       })
                       .then(function () {
                         for (let i = 0; i < newfeatures.length; i++) {
-                          if (newfeatures[i].A._id === savedId)
-                            savedInfo = newfeatures[i].A
+                          if (newfeatures[i].A._id === savedId) {
+                            //Repopulates the detail popup with the newly added entry
+                            popupIndex = newfeatures[i].A.info.length - 1
+                            setContent(newfeatures[i].A)
+                            break;
+                          }
                         }
-                        popupIndex = savedInfo.info.length - 1
-                        setContent(savedInfo)
                         return 0
                       })
                   })
@@ -953,7 +1110,6 @@ function setContent(pointInfo) {
                   newInsert.info2 = newInfo
                   nonDeleted.push(newInsert)
                   const newInsertPlusDeleted = json[i]
-                  newInsertPlusDeleted.info2 = newInsertPlusDeleted.info
                   dataWithDeleted.push(newInsertPlusDeleted)
                 }
               }
@@ -1055,6 +1211,10 @@ function setContent(pointInfo) {
   }
   else { futureButton.style.backgroundColor = "gainsboro" }
   content.appendChild(futureButton)
+
+  //Draws the popup to the screen
+  overlay.setOffset([-200, -300])
+  overlay.setPosition(ol.proj.transform([mapX, mapY], 'EPSG:4326', 'EPSG:3857'))
 }
 
 function gotoPosition(position) {
@@ -1112,7 +1272,7 @@ function setDownload() {
   downloadButton.onclick = function () {
     var element = document.createElement('a');
 
-    let csvData = 'ID,Latitude,Longitude,Name,Number,Address,Sestiere,Year,Type,Category,Remained Next Time?,Changed?,First?,Tourist?,Mixed?,Resident?,Artisan?,Lodging?\n'
+    let csvData = 'ID,Latitude,Longitude,Name,Number,Address,Sestiere,Year,Type,Category,Remained Next Time?,Changed?,First?,Tourist?,Mixed?,Resident?,Artisan?\n'
     for (let i = 0; i < dataFiltered.length; i++) {
       if (dataFiltered[i].info2.length !== 0) {
         for (let j = 0; j < dataFiltered[i].info.length; j++) {
@@ -1127,10 +1287,11 @@ function setDownload() {
             + thisInfo.year_collected + ','
             + thisInfo.store_type + ','
 
-          const keys = Object.keys(shopTypes)
+          const keys = Object.keys(SHOPTYPES)
           for (let k = 0; k < keys.length; k++) {
-            if (shopTypes[keys[k]].includes(thisInfo.store_type)) {
+            if (SHOPTYPES[keys[k]].includes(thisInfo.store_type)) {
               csvData = csvData + keys[k] + ','
+              break;
             }
           }
 
@@ -1150,14 +1311,11 @@ function setDownload() {
 
           for (let k = 0; k < typesDatabase.length; k++) {
             if (typesDatabase[k].type === thisInfo.store_type) {
-              if (typesDatabase[k].category === "Tourist") {  csvData = csvData + 'True,False,False,'}
-              else if (typesDatabase[k].category === "Mixed") {  csvData = csvData + 'False,True,False,'}
-              else {  csvData = csvData + 'False,False,True,'}
+              if (typesDatabase[k].category === "Tourist") { csvData = csvData + 'True,False,False,' }
+              else if (typesDatabase[k].category === "Mixed") { csvData = csvData + 'False,True,False,' }
+              else { csvData = csvData + 'False,False,True,' }
             }
           }
-
-          csvData = csvData + (artisanTypes.includes(thisInfo.store_type) ? 'True' : 'False') + ','
-            + (lodgingTypes.includes(thisInfo.store_type) ? 'True' : 'False') + '\n'
         }
       }
     }
@@ -1285,17 +1443,17 @@ function setSettings() {
       fetch("/settypes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({'data': typesDatabase})
+        body: JSON.stringify({ 'data': typesDatabase })
       })
-      .then(function (response) {
-        return response.json()
-      })
-      .then(function (json) {
-        typesDatabase = json
-        typesDatabaseDefault = JSON.parse(JSON.stringify(typesDatabase))
-        return 0
-      })
-      .then(removePopup())
+        .then(function (response) {
+          return response.json()
+        })
+        .then(function (json) {
+          typesDatabase = json
+          typesDatabaseDefault = JSON.parse(JSON.stringify(typesDatabase))
+          return 0
+        })
+        .then(removePopup())
     }
     content.appendChild(submitButton)
   }
@@ -1401,9 +1559,6 @@ function setAddLocation() {
             let pointInfo = map.getFeaturesAtPixel(event.pixel)[0].A
             popupIndex = pointInfo.info.length - 1
             setContent(pointInfo)
-
-            overlay.setOffset([-200, -300])
-            overlay.setPosition(ol.proj.transform([mapX, mapY], 'EPSG:4326', 'EPSG:3857'))
           } else { removePopup() }
         });
 
@@ -1534,7 +1689,7 @@ function setAddLocation() {
         loadingPopup()
         const formData = new FormData()
         formData.append('myFile', imageInput.files[0])
-        fetch("/upload2", {
+        fetch("/uploadLocal", {
           method: "POST",
           body: formData
         })
@@ -1601,7 +1756,6 @@ function setAddLocation() {
                               newInsert.info2 = newInfo
                               nonDeleted.push(newInsert)
                               const newInsertPlusDeleted = json[i]
-                              newInsertPlusDeleted.info2 = newInsertPlusDeleted.info
                               dataWithDeleted.push(newInsertPlusDeleted)
                             }
                           }
@@ -1612,12 +1766,13 @@ function setAddLocation() {
                         .then(function (data) {
                           setBaselines()
                           setFeatures()
-                          addLayer()
                           setYearFilter()
-                          setSestiereFilter()
-                          setStoreFilter()
-                          removePopup()
                           filterFeatures()
+                          return 0
+                        })
+                        .then(function () {
+                          popupIndex = 0
+                          setContent(newfeatures[newfeatures.length - 1].A)
                           return 0
                         })
                     })
@@ -1829,14 +1984,16 @@ function setChangeSize() {
   const changeSizeButton = document.querySelector('#changeSize')
   const changeSizeIcon = document.querySelector('#changeSizeImg')
   changeSizeButton.onclick = function () {
-    if (RADIUS === 5) {
+    if (radius === 5) {
       changeSizeIcon.src = "./assets/reduce.png"
-      RADIUS = 15
+      radius = 15
     }
     else {
       changeSizeIcon.src = "./assets/enlarge.png"
-      RADIUS = 5
+      radius = 5
     }
+    setStyles()
+    setFeatures()
     filterFeatures()
   }
 }
@@ -2002,7 +2159,6 @@ window.onload = function () {
             newInsert.info2 = newInfo
             nonDeleted.push(newInsert)
             const newInsertPlusDeleted = json[i]
-            newInsertPlusDeleted.info2 = newInsertPlusDeleted.info
             dataWithDeleted.push(newInsertPlusDeleted)
           }
         }
@@ -2037,6 +2193,7 @@ window.onload = function () {
               .then(function (data) {
                 setBaselines()
                 setFeatures()
+                removePopup()
                 setPopup()
                 setStyles()
                 addLayer()
