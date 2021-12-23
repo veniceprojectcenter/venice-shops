@@ -495,7 +495,7 @@ function setContent(pointInfo) {
   //Stores the element of the 'info' array specified by the global index
   let currInfo = information[popupIndex]
 
-  //Creates an 'edit' button in the top corner of the popup, adds the pencil icon
+  //Creates an 'edit' button in the top left corner of the popup, adds the pencil icon
   const editButton = document.createElement("button");
   editButton.classList.add('outerIcon')
   editButton.innerHTML = '<img class="icons" src="./assets/pencil.png"/>'
@@ -666,6 +666,9 @@ function setContent(pointInfo) {
                 })
                 .then(function (response) {
                   //All information needed to update the entry
+                  //The 'info' property is set equal to 'informationPlusDeleted' so that when 
+                  //the 'info' array of the location is replaced with the new modified value, 
+                  //the entries that have been marked for deletion in the past are not overwritten
                   const addedJSON = {
                     _id: pointInfo._id,
                     parent_id: pointInfo.parent_id,
@@ -693,6 +696,7 @@ function setContent(pointInfo) {
                       //after data is regrabbed from Mongodb
                       const savedId = pointInfo._id
                       const editing = new Promise((request, response) => {
+                        //Removes all features from the map
                         map.removeLayer(layer)
                         //Calls '/load' method
                         fetch("/load", {
@@ -784,6 +788,7 @@ function setContent(pointInfo) {
               //after data is regrabbed from Mongodb
               const savedId = pointInfo._id
               const editing = new Promise((request, response) => {
+                //Removes all features from the map
                 map.removeLayer(layer)
                 //Calls '/load' method
                 fetch("/load", {
@@ -849,15 +854,20 @@ function setContent(pointInfo) {
     content.appendChild(submitButton)
   }
 
+  //Creates an 'add' button in the top middle of the popup, adds the plus icon
   const plusButton = document.createElement("button")
   plusButton.classList.add('outerIcon')
   plusButton.innerHTML = '<img class="icons" src="./assets/plus.png"/>'
+  //Button press event listener
   plusButton.onclick = function () {
+    //Clears the content of the popup
     content.innerHTML = ""
 
+    //Displays a preview of the inputted image, empty by default
     const imagePreview = document.createElement("img")
     imagePreview.setAttribute("class", "imagePreview")
     content.appendChild(imagePreview)
+    //Creates an input that can be used to select an image to associate with the new entry
     const imageInput = document.createElement("input")
     imageInput.setAttribute("type", "file")
     imageInput.setAttribute("accept", "image/png, image/jpeg")
@@ -868,9 +878,11 @@ function setContent(pointInfo) {
     content.appendChild(imageInput)
     content.appendChild(document.createElement("br"))
 
+    //Creates a grid to standardize the format of the subsequent inputs
     const inputGrid = document.createElement("div")
     inputGrid.classList.add("inputGrid")
 
+    //Creates an input for the store name
     const nameLabel = document.createElement("label")
     nameLabel.setAttribute("for", "nameInput")
     nameLabel.innerText = "Name:"
@@ -878,6 +890,7 @@ function setContent(pointInfo) {
     const nameInput = document.createElement("input")
     nameInput.setAttribute("id", "nameInput")
     nameInput.setAttribute("name", "nameInput")
+    //Defaults to the name of the most recent entry at the associated location
     nameInput.value = currInfo.store_name
     inputGrid.appendChild(nameInput)
     const clearName = document.createElement("button")
@@ -885,6 +898,7 @@ function setContent(pointInfo) {
     clearName.onclick = function () { nameInput.value = "" }
     inputGrid.appendChild(clearName)
 
+    //Creates an input for the year of the entry
     const yearLabel = document.createElement("label")
     yearLabel.setAttribute("for", "yearInput")
     yearLabel.innerText = "Year:"
@@ -892,6 +906,7 @@ function setContent(pointInfo) {
     const yearInput = document.createElement("input")
     yearInput.setAttribute("id", "yearInput")
     yearInput.setAttribute("name", "yearInput")
+    //Defaults to the year in which the entry is being created
     yearInput.value = new Date().getFullYear()
     inputGrid.appendChild(yearInput)
     const clearYear = document.createElement("button")
@@ -899,6 +914,7 @@ function setContent(pointInfo) {
     clearYear.onclick = function () { yearInput.value = "" }
     inputGrid.appendChild(clearYear)
 
+    //Creates a dropdown to select the shop types
     const storeLabel = document.createElement("label")
     storeLabel.setAttribute("for", "storeInput")
     storeLabel.innerText = "Type:"
@@ -909,6 +925,7 @@ function setContent(pointInfo) {
     for (let i = 0; i < storesOptionsCopy.length; i++) {
       storeInput.add(storesOptionsCopy[i])
     }
+    //Defaults to the most recent type
     storeInput.value = currInfo.store_type
     inputGrid.appendChild(storeInput)
     const clearStore = document.createElement("button")
@@ -916,6 +933,7 @@ function setContent(pointInfo) {
     clearStore.onclick = function () { storeInput.value = "Closed" }
     inputGrid.appendChild(clearStore)
 
+    //Creates an input for a note, defaults to empty
     const noteLabel = document.createElement("label")
     noteLabel.setAttribute("for", "noteInput")
     noteLabel.innerText = "Note:"
@@ -930,6 +948,7 @@ function setContent(pointInfo) {
     inputGrid.appendChild(clearNote)
     content.appendChild(inputGrid)
 
+    //Creates a checkbox for flagging entries
     const flagLabel = document.createElement("label")
     flagLabel.setAttribute("for", "flagbox")
     flagLabel.innerText = "Flagged"
@@ -943,18 +962,24 @@ function setContent(pointInfo) {
     content.appendChild(document.createElement("br"))
     content.appendChild(document.createElement("br"))
 
+    //Creates a button for cancelling the submission of the new entry
     const cancelButton = document.createElement("button")
     cancelButton.innerText = "cancel"
     cancelButton.classList.add("textButton")
     cancelButton.classList.add("leftButton")
+    //Button press event listener, resets the detail view to show the most recent entry
     cancelButton.onclick = function () { setContent(pointInfo) }
     content.appendChild(cancelButton)
 
+    //Creates a button to submit the new entry to the database
     const submitButton = document.createElement("button")
     submitButton.innerText = "submit"
     submitButton.classList.add("textButton")
     submitButton.classList.add("rightButton")
+    //Button press event listener
     submitButton.onclick = function () {
+      //If no image is inputted, the year given is not a number, or the entry is flagged but no note
+      //is entered, the entry is not submitted
       if (imageInput.files.length === 0) {
         alert("Every data point must include a picture")
       }
@@ -965,20 +990,25 @@ function setContent(pointInfo) {
         alert("A flagged entry requires a note")
       }
       else {
+        //Display the loading popup
         loadingPopup()
+        //Create a new for for image upload
         const formData = new FormData()
         formData.append('myFile', imageInput.files[0])
+        //Calls the '/uploadLocal' method
         fetch("/uploadLocal", {
           method: "POST",
           body: formData
         })
           .then(response => response.json())
           .then(data => {
+            //Consolidates all necessary information to upload a local image file to Google Drive
             const imgUpload = {
               imgName: yearInput.value + pointInfo.address,
               parents: "",
               imgsrc: data.path
             }
+            //Calls the '/upload' method
             fetch("/upload", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -988,6 +1018,7 @@ function setContent(pointInfo) {
                 return response.json()
               })
               .then(function (response) {
+                //All information necessary to add a new entry for an existing location to the database
                 const addedJSON = {
                   _id: pointInfo._id,
                   parent_id: pointInfo.parent_id,
@@ -1003,14 +1034,19 @@ function setContent(pointInfo) {
                   group: "Undefined",
                   nace: "Undefined"
                 }
+                //Calls the '/add' method
                 fetch("/add", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify(addedJSON)
                 })
                   .then(function (response) {
+                    //Saves identifiying information about the current location to allow it to be
+                    //displayed again once the entry is submitted and the dataset is regrabbed
                     const savedId = pointInfo._id
+                    //Removes all features from the map
                     map.removeLayer(layer)
+                    //Calls the '/load' method
                     fetch("/load", {
                       method: "GET"
                     })
@@ -1018,40 +1054,47 @@ function setContent(pointInfo) {
                         return response.json()
                       })
                       .then(function (json) {
-                        const nonDeleted = []
+                        //Clears the shops databases
+                        dataFiltered = []
                         dataWithDeleted = []
+                        //Iterates over every location grabbed from MongoDB
                         for (let i = 0; i < json.length; i++) {
-                          let len = json[i].info.length
+                          //Grabs all entries from the location that have not been marked for deletion
                           const newInfo = []
                           for (let j = 0; j < json[i].info.length; j++) {
-                            if (json[i].info[j].deleted) { len = len - 1 }
-                            else { newInfo.push(json[i].info[j]) }
+                            if (!json[i].info[j].deleted) { newInfo.push(json[i].info[j]) }
                           }
-                          if (len > 0) {
+                          //Adds the data to the shops databases
+                          if (newInfo.length > 0) {
+                            //Adds the location with its non-deleted entries to dataFiltered
                             const newInsert = json[i]
                             newInsert.info = newInfo
+                            //Creates a duplicate of the 'info' object for filtering purposes
                             newInsert.info2 = newInfo
-                            nonDeleted.push(newInsert)
+                            dataFiltered.push(newInsert)
+                            //Adds the location with its deleted and non-deleted entries to dataWithDeleted
                             const newInsertPlusDeleted = json[i]
                             dataWithDeleted.push(newInsertPlusDeleted)
                           }
                         }
-                        data = nonDeleted
-                        dataUnfiltered = JSON.parse(JSON.stringify(data))
-                        return data
+                        //Copies dataFiltered to dataUnfiltered
+                        dataUnfiltered = JSON.parse(JSON.stringify(dataFiltered))
+                        return 0
                       })
                       .then(function (data) {
+                        //Calls all necessary functions to reset the map and filters with 
+                        //the newly grabbed data
                         setBaselines()
                         setFeatures()
                         addLayer()
                         setYearFilter()
-                        setSestiereFilter()
-                        setStoreFilter()
                         filterFeatures()
                         return 0
                       })
                       .then(function () {
+                        //Iterates over all features
                         for (let i = 0; i < newfeatures.length; i++) {
+                          //Checks if the id of the feature matches the saved id
                           if (newfeatures[i].A._id === savedId) {
                             //Repopulates the detail popup with the newly added entry
                             popupIndex = newfeatures[i].A.info.length - 1
@@ -1070,16 +1113,21 @@ function setContent(pointInfo) {
     content.appendChild(submitButton)
   }
 
+  //Creates a 'delete' button in the top right corner of the popup, adds the trash icon
   const deleteButton = document.createElement("button")
   deleteButton.classList.add('outerIcon')
   deleteButton.innerHTML = '<img class="icons" src="./assets/trash.png"/>'
+  //Button press event listener
   deleteButton.onclick = function () {
+    //Displays the loading popup
     loadingPopup()
+    //Gathers all necessary information to delete an entry
     const addedJSON = {
       _id: pointInfo._id,
       info: informationPlusDeleted,
       year: pointInfo.info[popupIndex].year_collected
     }
+    //Calls the '/delete' method
     fetch("/delete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1087,7 +1135,9 @@ function setContent(pointInfo) {
     })
       .then(function () {
         const deleting = new Promise((request, response) => {
+          //Removes all features from the map
           map.removeLayer(layer)
+          //Calls the '/load' method
           fetch("/load", {
             method: "GET"
           })
@@ -1095,35 +1145,39 @@ function setContent(pointInfo) {
               return response.json()
             })
             .then(function (json) {
-              const nonDeleted = []
+              //Clears the shops databases
+              dataFiltered = []
               dataWithDeleted = []
+              //Iterates over every location grabbed from MongoDB
               for (let i = 0; i < json.length; i++) {
-                let len = json[i].info.length
+                //Grabs all entries from the location that have not been marked for deletion
                 const newInfo = []
                 for (let j = 0; j < json[i].info.length; j++) {
-                  if (json[i].info[j].deleted) { len = len - 1 }
-                  else { newInfo.push(json[i].info[j]) }
+                  if (!json[i].info[j].deleted) { newInfo.push(json[i].info[j]) }
                 }
-                if (len > 0) {
+                //Adds the data to the shops databases
+                if (newInfo.length > 0) {
+                  //Adds the location with its non-deleted entries to dataFiltered
                   const newInsert = json[i]
                   newInsert.info = newInfo
+                  //Creates a duplicate of the 'info' object for filtering purposes
                   newInsert.info2 = newInfo
-                  nonDeleted.push(newInsert)
+                  dataFiltered.push(newInsert)
+                  //Adds the location with its deleted and non-deleted entries to dataWithDeleted
                   const newInsertPlusDeleted = json[i]
                   dataWithDeleted.push(newInsertPlusDeleted)
                 }
               }
-              dataFiltered = nonDeleted
+              //Copies dataFiltered to dataUnfiltered
               dataUnfiltered = JSON.parse(JSON.stringify(dataFiltered))
-              return dataFiltered
+              return 0
             })
             .then(function (data) {
+              //Calls all necessary functions to reset features and filters
               setBaselines()
               setFeatures()
               addLayer()
               setYearFilter()
-              setSestiereFilter()
-              setStoreFilter()
               removePopup()
               filterFeatures()
               return 0
@@ -1133,29 +1187,37 @@ function setContent(pointInfo) {
       })
   }
 
+  //Creates a grid to house the buttons
   const popupGrid = document.createElement("div")
   popupGrid.classList.add("popupGrid")
 
+  //Displays 'Flagged' in the first column of the grid if the current entry is flagged
   const col1 = document.createElement("h4")
   if (currInfo.flagged) { col1.innerText = 'Flagged' }
+  //Displays the year of the entry in the last column of the grid
   const col5 = document.createElement("h2")
   col5.innerText = currInfo.year_collected
 
+  //Assigns each element to a grid column
   col1.classList.add('popcol1')
   editButton.classList.add('popcol2')
   plusButton.classList.add('popcol3')
   deleteButton.classList.add('popcol4')
   col5.classList.add('popcol5')
-
+  //Adds the displays and the buttons to the grid 
   popupGrid.appendChild(col1)
   popupGrid.appendChild(editButton)
   popupGrid.appendChild(plusButton)
   popupGrid.appendChild(deleteButton)
   popupGrid.appendChild(col5)
 
+  //Adds the grid to the popup
   content.appendChild(popupGrid)
 
+  //Creates a 'div' element to house all necessary displays
   const displayedInfo = document.createElement("div")
+  //If the current entry has a name, shows the name in large print and the address below,
+  //otherwise shows the address in large print
   if (currInfo.store_name !== "") {
     displayedInfo.innerHTML = '<h1>' + currInfo.store_name + '</h1>'
       + '<h3>' + currInfo.address + '</h3>'
@@ -1163,31 +1225,39 @@ function setContent(pointInfo) {
   else {
     displayedInfo.innerHTML = '<h1>' + currInfo.address + '</h1>'
   }
+  //Appends image, street address, type, and note displays to the div
   displayedInfo.innerHTML = displayedInfo.innerHTML
     + '<img src="' + currInfo.image_url + '" id="oldImagePreview" width="200px" height="200px">'
     + '<h3>' + currInfo.address_street + '</h3>'
     + '<h3>' + currInfo.store_type + '</h3>'
     + '<p>' + currInfo.note + '</p>'
 
+  //Appends the div to the popup
   content.appendChild(displayedInfo)
 
+  //Reference to the image preview from the detail popup
   const oldImagePreview = document.querySelector('#oldImagePreview')
+  //Image click event listener, opens image in new tab
   oldImagePreview.onclick = function () {
     if (currInfo.image_url.length > 0) {
       window.open(currInfo.image_url.substring(0, currInfo.image_url.length - 16), '_blank');
     }
   }
 
+  //Creates button to display previous entry
   const pastButton = document.createElement("button");
   pastButton.innerText = "Previous Entry";
   pastButton.classList.add("leftButton")
   pastButton.classList.add('textButton');
+  //Button press event listener
   pastButton.onclick = function () {
+    //Subtracts 1 from the global index and repopulates the detail popup if there is a previous entry
     if (popupIndex > 0) {
       popupIndex = popupIndex - 1
       setContent(pointInfo)
     }
   }
+  //Disables the button if there is no previous entry
   if (popupIndex === 0) {
     pastButton.style.backgroundColor = "grey";
     pastButton.disabled = true
@@ -1195,16 +1265,20 @@ function setContent(pointInfo) {
   else { pastButton.style.backgroundColor = "gainsboro" }
   content.appendChild(pastButton)
 
+  //Creates button to display next entry
   const futureButton = document.createElement("button");
   futureButton.innerText = "Next Entry";
   futureButton.classList.add("rightButton")
   futureButton.classList.add('textButton');
+  //Button press event listener
   futureButton.onclick = function () {
+    //Adds 1 to the global index and repopulates the detail popup if there is a next entry
     if (popupIndex < information.length - 1) {
       popupIndex = popupIndex + 1
       setContent(pointInfo)
     }
   }
+  //Disables the button if there is no next entry
   if (popupIndex === information.length - 1) {
     futureButton.style.backgroundColor = "grey";
     futureButton.disabled = true
@@ -1217,10 +1291,12 @@ function setContent(pointInfo) {
   overlay.setPosition(ol.proj.transform([mapX, mapY], 'EPSG:4326', 'EPSG:3857'))
 }
 
-function gotoPosition(position) {
+//Pans and zooms the map to focus on the inputted coordinates
+function goToPosition(position) {
+  //Stores the latitude and longtitude specified by the arguement
   const lat = position.coords.latitude
   const lng = position.coords.longitude
-
+  //Does nothing if the coordinates are outside of Venice, pans and zooms otherwise
   if (lng < WEST || lng > EAST || lat > NORTH || lat < SOUTH) {
     alert("Invalid Coordinates")
   }
@@ -1230,6 +1306,7 @@ function gotoPosition(position) {
   }
 }
 
+//Shows an error if GPS is not properly enabled
 function showError(error) {
   switch (error.code) {
     case error.PERMISSION_DENIED:
@@ -1247,11 +1324,15 @@ function showError(error) {
   }
 }
 
+//Sets up the GPS button's functionality
 function setGoToLocation() {
+  //Reference to the GPS button
   const gotoLocation = document.querySelector('#gotoLocation')
+  //Button press event listener
   gotoLocation.onclick = function () {
+    //Attempts to access location services, calls 'goToPosition' if successful, 'showError' otherwise
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(gotoPosition, showError);
+      navigator.geolocation.getCurrentPosition(goToPosition, showError);
     }
     else {
       alert('Geolocation not supported')
@@ -1259,24 +1340,35 @@ function setGoToLocation() {
   }
 }
 
+//Sets up the Home button's functionality
 function setGoHome() {
+  //Reference to the Home button
   const goHome = document.querySelector('#goHome')
+  //Button press event listener, resets map pan and zoom to defaults
   goHome.onclick = function () {
     map.getView().setZoom(MINZOOM)
     map.getView().setCenter(ol.proj.transform([CENTERX, CENTERY], 'EPSG:4326', 'EPSG:3857'))
   }
 }
 
+//Sets up the Download button's functionality
 function setDownload() {
+  //Reference to the Download button
   const downloadButton = document.querySelector('#download')
+  //Button press event listener, creates CSV with filtered dataset and downloads it to disk
   downloadButton.onclick = function () {
+    //Create link element to facilitate the local download
     var element = document.createElement('a');
 
+    //String to establish columns of CSV
     let csvData = 'ID,Latitude,Longitude,Name,Number,Address,Sestiere,Year,Type,Category,Remained Next Time?,Changed?,First?,Tourist?,Mixed?,Resident?,Artisan?\n'
+    //Iterates over all the locations in the filtered dataset
     for (let i = 0; i < dataFiltered.length; i++) {
       if (dataFiltered[i].info2.length !== 0) {
+        //Iterates over all entries in a given location
         for (let j = 0; j < dataFiltered[i].info.length; j++) {
           const thisInfo = dataFiltered[i].info[j]
+          //Appends identifying information to the CSV string corresponding to the designated columns
           csvData = csvData + dataFiltered[i].parent_id + ','
             + dataFiltered[i].lat + ','
             + dataFiltered[i].lng + ','
@@ -1287,6 +1379,8 @@ function setDownload() {
             + thisInfo.year_collected + ','
             + thisInfo.store_type + ','
 
+          //Calculates the super-category of each entry by grabbing every category and
+          //checking if the entry's type matches its mapping
           const keys = Object.keys(SHOPTYPES)
           for (let k = 0; k < keys.length; k++) {
             if (SHOPTYPES[keys[k]].includes(thisInfo.store_type)) {
@@ -1295,20 +1389,25 @@ function setDownload() {
             }
           }
 
+          //Calculates whether or not the shop remained the same type or not in the next entry
+          //Not all entries have a 'next entry', so these are designated with 'N/A'
           if (j === dataFiltered[i].info.length - 1) { csvData = csvData + 'N/A,' }
           else if (thisInfo.store_type === dataFiltered[i].info[j + 1].store_type && thisInfo.store_type !== 'Closed') {
             csvData = csvData + 'False,'
           }
           else { csvData = csvData + 'True,' }
 
+          //Calculates whether or not the shop changed type since the last entry for that location
           if (j !== 0 && dataFiltered[i].info[j - 1].store_type !== thisInfo.store_type) {
             csvData = csvData + 'True,'
           }
           else { csvData = csvData + 'False,' }
 
+          //Records if the entry is the first for its location
           if (j === 0) { csvData = csvData + 'True,' }
           else { csvData = csvData + 'False,' }
 
+          //Checks the type against 'typesDatabase' to calculate the target market
           for (let k = 0; k < typesDatabase.length; k++) {
             if (typesDatabase[k].type === thisInfo.store_type) {
               if (typesDatabase[k].category === "Tourist") { csvData = csvData + 'True,False,False,' }
@@ -1316,10 +1415,15 @@ function setDownload() {
               else { csvData = csvData + 'False,False,True,' }
             }
           }
+
+          //Checks the type against the 'ARTISANTYPES' constant and records whether
+          //or not it is an artisan type
+          csvData = csvData + (ARTISANTYPES.includes(thisInfo.store_type) ? 'True' : 'False') + '\n'
         }
       }
     }
 
+    //Prepares the link element to handle downloads, usues it to download the data, and removes it
     element.setAttribute('href', 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvData));
     element.setAttribute('download', 'VeniceData.csv');
     element.style.display = 'none';
@@ -1329,30 +1433,41 @@ function setDownload() {
   }
 }
 
+//Sets up the Settings button
 function setSettings() {
+  //Reference to the Settings button
   const openSettings = document.querySelector('#settings')
+  //Button press event listener, opens the options popup and allows the types' 
+  //market mappings to be modified
   openSettings.onclick = function () {
+    //Opens the popup, clears its content
     popupPresent = true
     overlay.setOffset([-200, -300])
     overlay.setPosition(ol.proj.transform([mapX, mapY], 'EPSG:4326', 'EPSG:3857'))
-
     content.innerHTML = ""
 
+    //Iterates over all shop types
     for (let i = 0; i < allTypes.length; i++) {
+      //Creates a 'div' element to house the label and options
       const typeDiv = document.createElement("div")
       typeDiv.classList.add('typeGrid')
 
+      //Creates a label for the options that displays the name of the current type
       const typeLabel = document.createElement("h3")
       typeLabel.innerText = allTypes[i] + ': '
       typeLabel.style.display = 'inline-block'
 
+      //Creates a 3-way toggle switch
       const selector = document.createElement('div')
       selector.classList.add("switch-toggle")
 
+      //Creates an input for the 'Tourist' type
       const touristInput = document.createElement('input')
       touristInput.id = 'Tourist' + i
       touristInput.name = 'state-d' + i
       touristInput.type = 'radio'
+      //Button press event listener, changes the colors of all buttons and the 
+      //market of the associated type in the 'typesDatabase'
       touristInput.onclick = function () {
         if (touristInput.checked) {
           touristLabel.style.backgroundColor = 'Green'
@@ -1362,6 +1477,7 @@ function setSettings() {
         }
         else { touristLabel.style.backgroundColor = 'Black' }
       }
+      //Creates label that places the word 'Tourist' inside the button
       const touristLabel = document.createElement('label')
       touristLabel.for = 'Tourist' + i
       touristLabel.innerText = 'Tourist'
@@ -1372,10 +1488,13 @@ function setSettings() {
       selector.appendChild(touristLabel)
       touristLabel.appendChild(touristInput)
 
+      //Creates an input for the 'Mixed' type
       const mixedInput = document.createElement('input')
       mixedInput.id = 'Mixed' + i
       mixedInput.name = 'state-d' + i
       mixedInput.type = 'radio'
+      //Button press event listener, changes the colors of all buttons and the 
+      //market of the associated type in the 'typesDatabase'
       mixedInput.onclick = function () {
         if (mixedInput.checked) {
           touristLabel.style.backgroundColor = 'Black'
@@ -1385,6 +1504,7 @@ function setSettings() {
         }
         else { mixedLabel.style.backgroundColor = 'Black' }
       }
+      //Creates label that places the word 'Mixed' inside the button
       const mixedLabel = document.createElement('label')
       mixedLabel.for = 'Mixed' + i
       mixedLabel.innerText = 'Mixed'
@@ -1395,10 +1515,13 @@ function setSettings() {
       selector.appendChild(mixedLabel)
       mixedLabel.appendChild(mixedInput)
 
+      //Creates an input for the 'Resident' type
       const residentInput = document.createElement('input')
       residentInput.id = 'Resident' + i
       residentInput.name = 'state-d' + i
       residentInput.type = 'radio'
+      //Button press event listener, changes the colors of all buttons and the 
+      //market of the associated type in the 'typesDatabase'
       residentInput.onclick = function () {
         if (residentInput.checked) {
           touristLabel.style.backgroundColor = 'Black'
@@ -1408,6 +1531,7 @@ function setSettings() {
         }
         else { residentLabel.style.backgroundColor = 'Black' }
       }
+      //Creates label that places the word 'Resident' inside the button
       const residentLabel = document.createElement('label')
       residentLabel.for = 'Resident' + i
       residentLabel.innerText = 'Resident'
@@ -1428,19 +1552,24 @@ function setSettings() {
     content.appendChild(document.createElement("br"))
     content.appendChild(document.createElement("br"))
 
+    //Creates Cancel button
     const cancelButton = document.createElement("button")
     cancelButton.innerText = "cancel"
     cancelButton.classList.add("textButton")
     cancelButton.classList.add("leftButton")
+    //Button press event listener, removes the popup, which resets 'typesDatabse'
     cancelButton.onclick = function () { removePopup() }
     content.appendChild(cancelButton)
 
+    //Creates Submit button
     const submitButton = document.createElement("button")
     submitButton.innerText = "submit"
     submitButton.classList.add("textButton")
     submitButton.classList.add("rightButton")
+    //Button press event listener, pushes changes to MongoDB and updates the local databases
     submitButton.onclick = function () {
-      fetch("/settypes", {
+      //Calls the '/setTypes' method
+      fetch("/setTypes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 'data': typesDatabase })
@@ -1449,8 +1578,9 @@ function setSettings() {
           return response.json()
         })
         .then(function (json) {
-          typesDatabase = json
-          typesDatabaseDefault = JSON.parse(JSON.stringify(typesDatabase))
+          //Updates the default value of 'typesDatabse'
+          //'typesDatabase' itself is updated when 'removePopup' is called
+          typesDatabaseDefault = json
           return 0
         })
         .then(removePopup())
@@ -1459,15 +1589,19 @@ function setSettings() {
   }
 }
 
+//Sets up the Add Location button
 function setAddLocation() {
+  //Reference to the Add Location button
   const addLocation = document.querySelector('#addLocation')
+  //Button press event listener, allows users to create a new location and its first entry
   addLocation.onclick = function () {
+    //Shows the popup and clears its content
     popupPresent = true
     overlay.setOffset([-200, -300])
     overlay.setPosition(ol.proj.transform([mapX, mapY], 'EPSG:4326', 'EPSG:3857'))
-
     content.innerHTML = ""
 
+    //Creates a dropdown for selecting the sestiere
     const sestiereLabel = document.createElement("label")
     sestiereLabel.setAttribute("for", "sestiereInput")
     sestiereLabel.innerText = "Sestiere: "
@@ -1481,9 +1615,11 @@ function setAddLocation() {
     content.appendChild(sestiereInput)
     content.appendChild(document.createElement("br"))
 
+    //Creates a grid to standardize the format of the subsequent inputs
     const inputGrid1 = document.createElement("div")
     inputGrid1.classList.add('inputGrid2')
 
+    //Creates an input for the street name
     const streetLabel = document.createElement("label")
     streetLabel.setAttribute("for", "streetInput")
     streetLabel.innerText = "Street: "
@@ -1497,6 +1633,7 @@ function setAddLocation() {
     clearStreet.onclick = function () { streetInput.value = "" }
     inputGrid1.appendChild(clearStreet)
 
+    //Creates an input for the address number
     const numberLabel = document.createElement("label")
     numberLabel.setAttribute("for", "numberInput")
     numberLabel.innerText = "Number: "
@@ -1510,6 +1647,7 @@ function setAddLocation() {
     clearNumber.onclick = function () { numberInput.value = "" }
     inputGrid1.appendChild(clearNumber)
 
+    //Creates an input for the latitude
     const latLabel = document.createElement("label")
     latLabel.setAttribute("for", "latInput")
     latLabel.innerText = "Latitude: "
@@ -1523,6 +1661,7 @@ function setAddLocation() {
     clearLat.onclick = function () { latInput.value = "" }
     inputGrid1.appendChild(clearLat)
 
+    //Creates an input for the longitude
     const lngLabel = document.createElement("label")
     lngLabel.setAttribute("for", "lngInput")
     lngLabel.innerText = "Longitude: "
@@ -1537,21 +1676,34 @@ function setAddLocation() {
     inputGrid1.appendChild(clearLng)
     content.appendChild(inputGrid1)
 
+    //Creates the Find Coordinates button
     const findCoords = document.createElement("button")
     findCoords.innerText = "Find Coordinates"
     findCoords.classList.add("textButton")
     findCoords.style.width = "150px"
+    //Button press event listener, allows user to click a location on the map and
+    //sets the latitude and longitude inputs accordingly
     findCoords.onclick = function () {
+      //Removes the popup
       removePopup()
 
+      //Alert to teach the user how to use the functionality
       alert("Click a location to set the coordinates of the new store")
 
+      //Changes the 'click' event listener of the map, now it sets the latitude and 
+      //longitude inputs to match the clicked location and then resets the listener
       map.on('singleclick', function (event) {
         popupPresent = true
+        //Transforms the location of the click into a latitude and longitude
         const coords = ol.proj.transform(event.coordinate, 'EPSG:3857', 'EPSG:4326')
+        //Sets the latitude and longitude inputs accordingly
         latInput.value = coords[1]
         lngInput.value = coords[0]
+        //Shows the popup
+        overlay.setOffset([-200, -300])
+        overlay.setPosition(ol.proj.transform([mapX, mapY], 'EPSG:4326', 'EPSG:3857'))
 
+        //Resets the map 'click' event listener (now opens a detail popup if a shop is clicked)
         map.on('singleclick', function (event) {
           if (map.hasFeatureAtPixel(event.pixel) && map.getFeaturesAtPixel(event.pixel)[0].A.type === 'shop') {
             popupPresent = true
@@ -1561,14 +1713,12 @@ function setAddLocation() {
             setContent(pointInfo)
           } else { removePopup() }
         });
-
-        overlay.setOffset([-200, -300])
-        overlay.setPosition(ol.proj.transform([mapX, mapY], 'EPSG:4326', 'EPSG:3857'))
       })
     }
     content.appendChild(findCoords)
     content.appendChild(document.createElement("br"))
 
+    //Creates image preview to show the inputted image
     const imagePreview = document.createElement("img")
     imagePreview.setAttribute("class", "imagePreview")
     content.appendChild(imagePreview)
@@ -1582,9 +1732,11 @@ function setAddLocation() {
     content.appendChild(imageInput)
     content.appendChild(document.createElement("br"))
 
+    //Creates a second grid to standardize the format of the subsequent inputs
     const inputGrid2 = document.createElement("div")
     inputGrid2.classList.add('inputGrid2')
 
+    //Creates a name input 
     const nameLabel = document.createElement("label")
     nameLabel.setAttribute("for", "nameInput")
     nameLabel.innerText = "Name:"
@@ -1598,6 +1750,7 @@ function setAddLocation() {
     clearName.onclick = function () { nameInput.value = "" }
     inputGrid2.appendChild(clearName)
 
+    //Creates a year input
     const yearLabel = document.createElement("label")
     yearLabel.setAttribute("for", "yearInput")
     yearLabel.innerText = "Year:"
@@ -1605,6 +1758,7 @@ function setAddLocation() {
     const yearInput = document.createElement("input")
     yearInput.setAttribute("id", "yearInput")
     yearInput.setAttribute("name", "yearInput")
+    //Defaults to the year in which the data is being entered
     yearInput.value = new Date().getFullYear()
     inputGrid2.appendChild(yearInput)
     const clearYear = document.createElement("button")
@@ -1612,6 +1766,7 @@ function setAddLocation() {
     clearYear.onclick = function () { yearInput.value = "" }
     inputGrid2.appendChild(clearYear)
 
+    //Creates a store type dropdown
     const storeLabel = document.createElement("label")
     storeLabel.setAttribute("for", "storeInput")
     storeLabel.innerText = "Type:"
@@ -1628,6 +1783,7 @@ function setAddLocation() {
     clearStore.onclick = function () { storeInput.value = "Closed" }
     inputGrid2.appendChild(clearStore)
 
+    //Creates a not input
     const noteLabel = document.createElement("label")
     noteLabel.setAttribute("for", "noteInput")
     noteLabel.innerText = "Note:"
@@ -1642,6 +1798,7 @@ function setAddLocation() {
     inputGrid2.appendChild(clearNote)
     content.appendChild(inputGrid2)
 
+    //Creates a checkbox for flagging 
     const flagLabel = document.createElement("label")
     flagLabel.setAttribute("for", "flagbox")
     flagLabel.innerText = "Flagged"
@@ -1653,20 +1810,25 @@ function setAddLocation() {
     content.appendChild(flagBox)
     content.appendChild(document.createElement("br"))
 
+    //Creates a cancel button
     const cancelButton = document.createElement("button")
     cancelButton.innerText = "cancel"
     cancelButton.classList.add("textButton")
     cancelButton.classList.add("leftButton")
-    cancelButton.onclick = function () {
-      removePopup()
-    }
+    //Button press event listener, removes the popup without submitting the new location
+    cancelButton.onclick = function () { removePopup() }
     content.appendChild(cancelButton)
 
+    //Creates a submit button
     const submitButton = document.createElement("button")
     submitButton.innerText = "submit"
     submitButton.classList.add("textButton")
     submitButton.classList.add("rightButton")
+    //Button press event listener, submits the new location to the database and regrabs the data
     submitButton.onclick = function () {
+      //Does not submit location if the address number is left blank, the latitude and longitude
+      //are not numbers, there is no image, the year is not a number, or the entry is flagged but
+      //no note is given
       if (numberInput.value === "") {
         alert("Address Number cannot be left blank")
       }
@@ -1686,20 +1848,25 @@ function setAddLocation() {
         alert("A flagged entry requires a note")
       }
       else {
+        //Shows the loading message
         loadingPopup()
+        //Creates a form to faciliate temporary local image storage
         const formData = new FormData()
         formData.append('myFile', imageInput.files[0])
+        //Calls the '/uploadLocal' method
         fetch("/uploadLocal", {
           method: "POST",
           body: formData
         })
           .then(response => response.json())
           .then(data => {
+            //Stores information necessary to upload image to Google Drive
             const imgUpload = {
               imgName: yearInput.value + sestiereInput.value + ' ' + numberInput.value,
               parents: "",
               imgsrc: data.path
             }
+            //Calls the '/upload' method
             fetch("/upload", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -1709,6 +1876,7 @@ function setAddLocation() {
                 return response.json()
               })
               .then(function (response) {
+                //All necessary information for a location and an entry
                 const addedJSON = {
                   parent_id: dataUnfiltered.length + 1,
                   street: streetInput.value,
@@ -1725,7 +1893,7 @@ function setAddLocation() {
                   group: "Undefined",
                   nace: "Undefined"
                 }
-
+                //Calls the '/addLoc' method
                 fetch("/addLoc", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
@@ -1733,6 +1901,7 @@ function setAddLocation() {
                 })
                   .then(function () {
                     const editing = new Promise((request, response) => {
+                      //Removes all features from the map
                       map.removeLayer(layer)
                       fetch("/load", {
                         method: "GET"
@@ -1741,36 +1910,44 @@ function setAddLocation() {
                           return response.json()
                         })
                         .then(function (json) {
-                          const nonDeleted = []
+                          //Clears the shops databases
+                          dataFiltered = []
                           dataWithDeleted = []
+                          //Iterates over every location grabbed from MongoDB
                           for (let i = 0; i < json.length; i++) {
-                            let len = json[i].info.length
+                            //Grabs all entries from the location that have not been marked for deletion
                             const newInfo = []
                             for (let j = 0; j < json[i].info.length; j++) {
-                              if (json[i].info[j].deleted) { len = len - 1 }
-                              else { newInfo.push(json[i].info[j]) }
+                              if (!json[i].info[j].deleted) { newInfo.push(json[i].info[j]) }
                             }
-                            if (len > 0) {
+                            //Adds the data to the shops databases
+                            if (newInfo.length > 0) {
+                              //Adds the location with its non-deleted entries to dataFiltered
                               const newInsert = json[i]
                               newInsert.info = newInfo
+                              //Creates a duplicate of the 'info' object for filtering purposes
                               newInsert.info2 = newInfo
-                              nonDeleted.push(newInsert)
+                              dataFiltered.push(newInsert)
+                              //Adds the location with its deleted and non-deleted entries to dataWithDeleted
                               const newInsertPlusDeleted = json[i]
                               dataWithDeleted.push(newInsertPlusDeleted)
                             }
                           }
-                          data = nonDeleted
-                          dataUnfiltered = JSON.parse(JSON.stringify(data))
-                          return data
+                          //Copies dataFiltered to dataUnfiltered
+                          dataUnfiltered = JSON.parse(JSON.stringify(dataFiltered))
+                          return 0
                         })
                         .then(function (data) {
+                          //Calls all function necessary to reset the map and the filters
                           setBaselines()
                           setFeatures()
+                          addLayer()
                           setYearFilter()
                           filterFeatures()
                           return 0
                         })
                         .then(function () {
+                          //Displays the detail popup for the new location and entry
                           popupIndex = 0
                           setContent(newfeatures[newfeatures.length - 1].A)
                           return 0
@@ -1786,69 +1963,90 @@ function setAddLocation() {
   }
 }
 
+//Facilitates the creation of checkbox filters
 function setCheckboxHTML(name) {
   return '<input class="checkbox" type="checkbox" id="' + name + 'box">'
     + '<label for="' + name + 'box">' + name + '</label>'
 }
 
+//Creates the checkbox filters
 function setCheckboxes() {
+  //Creates the filter for flagged entries
   const flagFilter = document.querySelector('#flagFilter')
   flagFilter.innerHTML = setCheckboxHTML('Flagged')
   const flaggedBox = document.querySelector('#Flaggedbox')
   flaggedBox.addEventListener("change", filterFeatures)
 
+  //Creates the filter for unflagged entries
   const unflagFilter = document.querySelector('#unflagFilter')
   unflagFilter.innerHTML = setCheckboxHTML('Unflagged')
   const unflaggedBox = document.querySelector('#Unflaggedbox')
   unflaggedBox.addEventListener("change", filterFeatures)
 
+  //Creates the filter for entries that are not currently closed
   const openFilter = document.querySelector('#openFilter')
   openFilter.innerHTML = setCheckboxHTML('Open')
   const openBox = document.querySelector('#Openbox')
   openBox.addEventListener("change", filterFeatures)
 
+  //Creates the filter for entries that fall into the 'Tourist' category
   const touristFilter = document.querySelector('#touristFilter')
   touristFilter.innerHTML = setCheckboxHTML('Tourist')
   const touristBox = document.querySelector('#Touristbox')
   touristBox.addEventListener("change", filterFeatures)
 
+  //Creates the filter for entries that fall into the 'Resident' category
   const residentFilter = document.querySelector('#residentFilter')
   residentFilter.innerHTML = setCheckboxHTML('Resident')
   const residentBox = document.querySelector('#Residentbox')
   residentBox.addEventListener("change", filterFeatures)
 
+  //Creates the filter for entries that fall into the 'Mixed' category
   const mixedFilter = document.querySelector('#mixedFilter')
   mixedFilter.innerHTML = setCheckboxHTML('Mixed')
   const mixedBox = document.querySelector('#Mixedbox')
   mixedBox.addEventListener("change", filterFeatures)
 
+  //Creates the filter for features that are of type 'shop'
   const shopsFilter = document.querySelector('#shopsFilter')
   shopsFilter.innerHTML = setCheckboxHTML('Shops')
   const shopsBox = document.querySelector('#Shopsbox')
   shopsBox.checked = true
   shopsBox.addEventListener("change", filterFeatures)
 
+  //Creates the filter for features that are of type 'airbnb'
   const airbnbFilter = document.querySelector('#airbnbFilter')
   airbnbFilter.innerHTML = setCheckboxHTML('Airbnbs')
   const airbnbsbox = document.querySelector('#Airbnbsbox')
   airbnbsbox.addEventListener("change", filterFeatures)
 }
 
+//Sets up the Year filter
 function setYearFilter() {
+  //Year filter reference
   const yearFilter = document.querySelector('#yearFilter')
   yearFilter.innerHTML = yearFilterDefault
 
+  //Creates the dropdown
   const yearSelect = document.createElement('select')
   yearSelect.multiple = true
   yearSelect.id = 'yearSelect'
-  yearSelect.onchange = filterFeatures
-
+  yearSelect.onchange = function () {
+    //Stops the timelapse if necessary
+    if (timelapsing) { stopTimelapse() }
+    //Filters the data to reflect the selected years
+    filterFeatures()
+  }
+  //Appends all pre-calculated 'Year' options to the selector
   for (var i = 0; i < yearOptions.length; i++) {
     yearSelect.appendChild(yearOptions[i]);
   }
 
+  //Appends the dropdown to the filter
   yearFilter.appendChild(yearSelect)
 
+  //Establishes the dropdown as a 'SlimSelect' selector, which allows for
+  //aesthetically pleasing and functional multi-select dropdowns
   const yearSlimSelect = new SlimSelect({
     select: '#yearSelect',
     allowDeselectOption: true,
@@ -1858,21 +2056,27 @@ function setYearFilter() {
   });
 }
 
+//Sets up the Sestiere filter
 function setSestiereFilter() {
+  //Reference to the Sestiere filter
   const sestiereFilter = document.querySelector('#sestiereFilter')
   sestiereFilter.innerHTML = sestiereFilterDefault
 
+  //Creates the dropdown
   const sestiereSelect = document.createElement('select')
   sestiereSelect.multiple = true
   sestiereSelect.id = 'sestiereSelect'
   sestiereSelect.onchange = filterFeatures
 
+  //Appends all pre-calculated 'Sestiere' options to the selector
   for (var i = 0; i < sestiereOptions.length; i++) {
     sestiereSelect.appendChild(sestiereOptions[i]);
   }
 
+  //Appends the dropdown to the filter
   sestiereFilter.appendChild(sestiereSelect)
 
+  //Establishes the dropdown as a 'SlimSelect' selector
   const sestiereSlimSelect = new SlimSelect({
     select: '#sestiereSelect',
     allowDeselectOption: true,
@@ -1882,21 +2086,27 @@ function setSestiereFilter() {
   });
 }
 
+//Sets up the Shop Type filter
 function setStoreFilter() {
+  //Reference to the Shop Type filter
   const storeFilter = document.querySelector('#storeFilter')
   storeFilter.innerHTML = storeFilterDefault
 
+  //Creates the dropdown
   const storeSelect = document.createElement('select')
   storeSelect.multiple = true
   storeSelect.id = 'storeSelect'
   storeSelect.onchange = filterFeatures
 
+  //Appends all pre-calculated 'Shop type' options to the selector
   for (var i = 0; i < storesOptions.length; i++) {
     storeSelect.appendChild(storesOptions[i]);
   }
 
+  //Appends the dropdown to the filter
   storeFilter.appendChild(storeSelect)
 
+  //Establishes the dropdown as a 'SlimSelect' selector
   const storeSlimSelect = new SlimSelect({
     select: '#storeSelect',
     selectByGroup: true,
@@ -1907,50 +2117,71 @@ function setStoreFilter() {
   });
 }
 
+//Sets up the Timelapse buttons
 function setTimelapse() {
+  //Reference to the Start Cycle button
   const timelapseButton = document.querySelector('#timelapseButton')
-  timelapseButton.onclick = startTimelapse
+  //Button press event listener, calls 'StartTimelapse'
+  timelapseButton.onclick = function () { startTimelapse }
   timelapseButton.style.backgroundColor = "gainsboro"
 
+  //Reference to the Stop Cycle button
   const stopTimelapseButton = document.querySelector('#stopTimelapseButton')
-  stopTimelapseButton.onclick = stopTimelapse
+  //Button press event listener, calls 'StopTimelapse'
+  stopTimelapseButton.onclick = function () { stopTimelapse }
   stopTimelapseButton.style.backgroundColor = "grey"
+  //Disables the button by default
   stopTimelapseButton.disabled = true
 }
 
+//Starts the timelapse
 function startTimelapse() {
+  //Reference to the Start Cycle button
   const timelapseButton = document.querySelector('#timelapseButton')
+  //If the timelapse is paused, resume the timelapse, otherwise pause it
   if (paused) {
     paused = false
+    //Changes the text of the button
     timelapseButton.innerText = 'Resume Cycle'
+    //Pauses the cycling
     clearInterval(timelapseInterval)
   }
   else {
+    //Sets the 'timelapsing' global flag to true to facilitate correct filtering
     timelapsing = true
     paused = true
+    //Changes the text of the button
     timelapseButton.innerText = 'Pause Cycle'
+    //Refernce to the year display
     const yearDisplay = document.querySelector('#yearDisplay')
 
+    //References and enables the Stop Timelapse button
     const stopTimelapseButton = document.querySelector('#stopTimelapseButton')
     stopTimelapseButton.style.backgroundColor = "gainsboro"
     stopTimelapseButton.disabled = false
 
+    //Refernce to the year filter
     const yearSelecting = document.querySelector('#yearSelect')
     let allYearTargets = []
+    //Grabs all selected years, grabs all years if none are selected
     for (let i = yearSelecting.selectedOptions.length - 1; i >= 0; i--) {
       allYearTargets.push(yearSelecting.selectedOptions[i].value)
     }
-
     if (allYearTargets.length === 0) {
       allYearTargets = [...allYears].sort()
     }
 
+    //Passes only one of the selected years to the filtering function
     yearTargets = allYearTargets[yearIndex]
     filterFeatures()
+    //Displays the name of the shown year under the cycling buttons
     yearDisplay.innerText = allYearTargets[yearIndex]
+    //Increases the global index of the year counter
     yearIndex = yearIndex + 1
     if (yearIndex === allYearTargets.length) { yearIndex = 0 }
 
+    //Changes the selected year and refilters the dataset on an interval 
+    //determined by the 'CYCLETIME' constant
     timelapseInterval = setInterval(function () {
       yearTargets = allYearTargets[yearIndex]
       filterFeatures()
@@ -1961,29 +2192,41 @@ function startTimelapse() {
   }
 }
 
+//Stops the timelapse
 function stopTimelapse() {
+  //Resets the timelapse index and relevant flags
   yearIndex = 0
   timelapsing = false
   paused = false
+  //Stops timelapsing
   clearInterval(timelapseInterval)
+  //References the Start Cycle button and resets its label
   const timelapseButton = document.querySelector('#timelapseButton')
   timelapseButton.innerText = 'Cycle Years'
   timelapseButton.onclick = startTimelapse
 
+  //References and clears the year display
   const yearDisplay = document.querySelector('#yearDisplay')
   yearDisplay.innerText = ''
 
+  //References and disables the Stop Timelapse button
   const stopTimelapseButton = document.querySelector('#stopTimelapseButton')
   stopTimelapseButton.style.backgroundColor = "grey"
   stopTimelapseButton.disabled = true
 
+  //Refilters the data to undo the effect of the timelapse
   filterFeatures()
 }
 
+//Sets up the Change Size button
 function setChangeSize() {
+  //References to the change size button and its image
   const changeSizeButton = document.querySelector('#changeSize')
   const changeSizeIcon = document.querySelector('#changeSizeImg')
+  //Button press event listener
   changeSizeButton.onclick = function () {
+    //If the circles are small, increase their size and change the image to the 'reduce' png,
+    //otherwise, decrease their size and change the image to the 'enlarge' png
     if (radius === 5) {
       changeSizeIcon.src = "./assets/reduce.png"
       radius = 15
@@ -1992,12 +2235,16 @@ function setChangeSize() {
       changeSizeIcon.src = "./assets/enlarge.png"
       radius = 5
     }
+    //Recalculates the styles to reflect the new radius
     setStyles()
+    //Reestablishes the features to reflect the new styles
     setFeatures()
+    //Filters the features to reset the circles and adhere to any selected filters
     filterFeatures()
   }
 }
 
+//Determines whether or not an entry's type fits within a set of markets
 function marketFilter(shopType, targetCategories) {
   for (let k = 0; k < typesDatabase.length; k++) {
     if (typesDatabase[k].type === shopType) {
@@ -2008,72 +2255,25 @@ function marketFilter(shopType, targetCategories) {
   return false
 }
 
+//Filters the data based on the dropdown and checkbox filters
 function filterFeatures() {
+  //Removes the popup if necessary
   removePopup()
 
+  //If the app is not currently in timelapse mode, grab all selected years, otherwise
+  //only use the preestablished year for filtering
   if (!timelapsing) {
+    //References the Year filter
     const yearSelecting = document.querySelector('#yearSelect')
     yearTargets = []
+    //Grabs all selected options from the filter
     for (let i = 0; i < yearSelecting.selectedOptions.length; i++) {
       yearTargets.push(yearSelecting.selectedOptions[i].value)
     }
   }
-
-  const sestiereSelecting = document.querySelector('#sestiereSelect')
-  sestiereTargets = []
-  for (let i = 0; i < sestiereSelecting.selectedOptions.length; i++) {
-    sestiereTargets.push(sestiereSelecting.selectedOptions[i].value)
-  }
-
-  const storeSelecting = document.querySelector('#storeSelect')
-  storeTargets = []
-  for (let i = 0; i < storeSelecting.selectedOptions.length; i++) {
-    storeTargets.push(storeSelecting.selectedOptions[i].value)
-  }
-
-  dataFiltered = JSON.parse(JSON.stringify(dataUnfiltered))
-  airbnbFiltered = JSON.parse(JSON.stringify(airbnbUnfiltered))
-
-  let flagged = document.querySelector('#Flaggedbox')
-  let unflagged = document.querySelector('#Unflaggedbox')
-  if (flagged.checked) {
-    unflagged.disabled = true
-    for (let i = 0; i < dataFiltered.length; i++) {
-      dataFiltered[i].info2 = dataFiltered[i].info2.filter(item => item.flagged)
-    }
-  }
-  else { unflagged.disabled = false }
-
-  if (unflagged.checked) {
-    flagged.disabled = true
-    for (let i = 0; i < dataFiltered.length; i++) {
-      dataFiltered[i].info2 = dataFiltered[i].info2.filter(item => !item.flagged)
-    }
-  }
-  else { flagged.disabled = false }
-
-  let openOnly = document.querySelector('#Openbox')
-  if (openOnly.checked) {
-    for (let i = 0; i < dataFiltered.length; i++) {
-      if (dataFiltered[i].info2.length !== 0 && dataFiltered[i].info2[dataFiltered[i].info2.length - 1].store_type === 'Closed') {
-        dataFiltered[i].info2 = []
-      }
-    }
-  }
-
-  let touristOnly = document.querySelector('#Touristbox')
-  let residentOnly = document.querySelector('#Residentbox')
-  let mixedOnly = document.querySelector('#Mixedbox')
-  let markets = []
-  if (touristOnly.checked) { markets.push("Tourist") }
-  if (residentOnly.checked) { markets.push("Resident") }
-  if (mixedOnly.checked) { markets.push("Mixed") }
-  if (markets.length === 0) { markets = ["Tourist", "Resident", "Mixed"] }
-  for (let i = 0; i < dataFiltered.length; i++) {
-    dataFiltered[i].info2 = dataFiltered[i].info2.filter(item => marketFilter(item.store_type, markets))
-  }
-
+  //Refereces the Shops checkbox
   let addShops = document.querySelector('#Shopsbox')
+  //Disables all checkboxes and clears all shops data if unchecked
   if (!addShops.checked) {
     flagged.disabled = true
     unflagged.disabled = true
@@ -2094,49 +2294,140 @@ function filterFeatures() {
     mixedOnly.disabled = false
   }
 
+  //References the Airbnb checkbox
   let addAirbnbs = document.querySelector('#Airbnbsbox')
+  //Clears all airbnb data if unchecked
   if (!addAirbnbs.checked) {
     for (let i = 0; i < airbnbFiltered.length; i++) {
       airbnbFiltered[i].years = []
     }
   }
+  //References the Sestiere filter
+  const sestiereSelecting = document.querySelector('#sestiereSelect')
+  sestiereTargets = []
+  //Grabs all selected sestiere from the filter
+  for (let i = 0; i < sestiereSelecting.selectedOptions.length; i++) {
+    sestiereTargets.push(sestiereSelecting.selectedOptions[i].value)
+  }
 
+  //References the Shop Types filter
+  const storeSelecting = document.querySelector('#storeSelect')
+  storeTargets = []
+  //Grabs all selected types from the filter
+  for (let i = 0; i < storeSelecting.selectedOptions.length; i++) {
+    storeTargets.push(storeSelecting.selectedOptions[i].value)
+  }
+
+  //Resets the filtered databases
+  dataFiltered = JSON.parse(JSON.stringify(dataUnfiltered))
+  airbnbFiltered = JSON.parse(JSON.stringify(airbnbUnfiltered))
+
+  //References the Flagged and Unflagged checkboxes
+  let flagged = document.querySelector('#Flaggedbox')
+  let unflagged = document.querySelector('#Unflaggedbox')
+  //If the Flagged box is checked, disable the Unflagged checkbox
+  if (flagged.checked) {
+    unflagged.disabled = true
+    //Iterates over all locations in 'dataFiltered'
+    for (let i = 0; i < dataFiltered.length; i++) {
+      //Remove all entries from the location's 'info2' array that are not flagged
+      dataFiltered[i].info2 = dataFiltered[i].info2.filter(item => item.flagged)
+    }
+  }
+  else { unflagged.disabled = false }
+  //If the Unflagged box is checked, disable the Flagged checkbox
+  if (unflagged.checked) {
+    flagged.disabled = true
+    //Iterates over all locations in 'dataFiltered'
+    for (let i = 0; i < dataFiltered.length; i++) {
+      //Remove all entries from the location's 'info2' array that are flagged
+      dataFiltered[i].info2 = dataFiltered[i].info2.filter(item => !item.flagged)
+    }
+  }
+  else { flagged.disabled = false }
+
+  //References the Open checkbox
+  let openOnly = document.querySelector('#Openbox')
+  //Checks if the Open box is checked
+  if (openOnly.checked) {
+    //Iterates over all locations in 'dataFiltered'
+    for (let i = 0; i < dataFiltered.length; i++) {
+      //Removes all entries from the info2 array of the location if the most recent entry
+      //for that location was of type 'closed'
+      if (dataFiltered[i].info2.length !== 0 && dataFiltered[i].info2[dataFiltered[i].info2.length - 1].store_type === 'Closed') {
+        dataFiltered[i].info2 = []
+      }
+    }
+  }
+
+  //References to the Tourist, Resident, and Mixed checkboxes
+  let touristOnly = document.querySelector('#Touristbox')
+  let residentOnly = document.querySelector('#Residentbox')
+  let mixedOnly = document.querySelector('#Mixedbox')
+  //Stores whether or not each box is selected
+  //If no box is selected, all market are shown
+  let markets = []
+  if (touristOnly.checked) { markets.push("Tourist") }
+  if (residentOnly.checked) { markets.push("Resident") }
+  if (mixedOnly.checked) { markets.push("Mixed") }
+  if (markets.length === 0) { markets = ["Tourist", "Resident", "Mixed"] }
+  //Iterates over all locations in 'dataFiltered'
+  for (let i = 0; i < dataFiltered.length; i++) {
+    //Every entry that does not match the markets is removed from a location's 'info2' array
+    dataFiltered[i].info2 = dataFiltered[i].info2.filter(item => marketFilter(item.store_type, markets))
+  }
+
+  //Only filters by year if at least one year is selected
   if (yearTargets.length !== 0) {
+    //Removes all shops from years that are not selected
     for (let i = 0; i < dataFiltered.length; i++) {
       dataFiltered[i].info2 = dataFiltered[i].info2.filter(item => yearTargets.includes(String(item.year_collected)))
     }
+    //Removes all airbnbs from years that are not selected
     for (let i = 0; i < airbnbFiltered.length; i++) {
       airbnbFiltered[i].years = airbnbFiltered[i].years.filter(item => yearTargets.includes(String(item)) || yearTargets.includes(String(item) + ' (Airbnb only)'))
     }
   }
+  //Only filters by sestiere if at least one sestiere is selected
   if (sestiereTargets.length !== 0) {
+    //Removes all shops from sestiere that are not selected
     for (let i = 0; i < dataFiltered.length; i++) {
       if (!sestiereTargets.includes(dataFiltered[i].address_sestiere)) {
         dataFiltered[i].info2 = []
       }
     }
+    //Removes all airbnbs from sestiere that are not selected
     for (let i = 0; i < airbnbFiltered.length; i++) {
       if (!sestiereTargets.includes(airbnbFiltered[i].address_sestiere)) {
         airbnbFiltered[i].years = []
       }
     }
   }
+  //Only filters by type if at least one type is selected
   if (storeTargets.length !== 0) {
+    //Removes all shops with types that are not selected
     for (let i = 0; i < dataFiltered.length; i++) {
       dataFiltered[i].info2 = dataFiltered[i].info2.filter(item => storeTargets.includes(item.store_type))
     }
   }
 
+  //Removes all features from the map
   map.removeLayer(layer)
 
+  //Recreates the features with the new filtered datasets
   setFeatures()
+  //Adds the features to the map
   addLayer()
 }
 
+//Function called when the app loads, calls all setup functions
 window.onload = function () {
+  //Add the map to the screen before data is grabbed
   setMap()
   const init = new Promise((request, response) => {
+    //Removes all features from the map
     map.removeLayer(layer)
+    //Calls the '/load' method
     fetch("/load", {
       method: "GET"
     })
@@ -2144,53 +2435,63 @@ window.onload = function () {
         return response.json()
       })
       .then(function (json) {
-        const nonDeleted = []
+        //Clears the shops databases
+        dataFiltered = []
         dataWithDeleted = []
+        //Iterates over every location grabbed from MongoDB
         for (let i = 0; i < json.length; i++) {
-          let len = json[i].info.length
+          //Grabs all entries from the location that have not been marked for deletion
           const newInfo = []
           for (let j = 0; j < json[i].info.length; j++) {
-            if (json[i].info[j].deleted) { len = len - 1 }
-            else { newInfo.push(json[i].info[j]) }
+            if (!json[i].info[j].deleted) { newInfo.push(json[i].info[j]) }
           }
-          if (len > 0) {
+          //Adds the data to the shops databases
+          if (newInfo.length > 0) {
+            //Adds the location with its non-deleted entries to dataFiltered
             const newInsert = json[i]
             newInsert.info = newInfo
+            //Creates a duplicate of the 'info' object for filtering purposes
             newInsert.info2 = newInfo
-            nonDeleted.push(newInsert)
+            dataFiltered.push(newInsert)
+            //Adds the location with its deleted and non-deleted entries to dataWithDeleted
             const newInsertPlusDeleted = json[i]
             dataWithDeleted.push(newInsertPlusDeleted)
           }
         }
-        dataFiltered = nonDeleted
+        //Copies dataFiltered to dataUnfiltered
         dataUnfiltered = JSON.parse(JSON.stringify(dataFiltered))
-        return dataFiltered
+        return 0
       })
       .then(function (data) {
-        fetch("/loadairbnb", {
+        //Calls the '/loadAirbnb' method
+        fetch("/loadAirbnb", {
           method: "GET"
         })
           .then(function (response) {
             return response.json()
           })
           .then(function (json) {
+            //Stores the airbnb data
             airbnbFiltered = json
             airbnbUnfiltered = JSON.parse(JSON.stringify(airbnbFiltered))
             return 0
           })
           .then(function (data) {
-            fetch("/loadtypes", {
+            //Calls the '/loadTypes' method
+            fetch("/loadTypes", {
               method: "GET"
             })
               .then(function (response) {
                 return response.json()
               })
               .then(function (json) {
+                //Stores the type mapping data
                 typesDatabase = json
                 typesDatabaseDefault = JSON.parse(JSON.stringify(typesDatabase))
                 return 0
               })
               .then(function (data) {
+                //Calls all necessary setup functions
                 setBaselines()
                 setFeatures()
                 removePopup()
