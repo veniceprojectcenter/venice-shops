@@ -2066,7 +2066,7 @@ function setSestiereFilter() {
   const sestiereSelect = document.createElement('select')
   sestiereSelect.multiple = true
   sestiereSelect.id = 'sestiereSelect'
-  sestiereSelect.onchange = filterFeatures
+  sestiereSelect.onchange = function () { filterFeatures }
 
   //Appends all pre-calculated 'Sestiere' options to the selector
   for (var i = 0; i < sestiereOptions.length; i++) {
@@ -2096,7 +2096,7 @@ function setStoreFilter() {
   const storeSelect = document.createElement('select')
   storeSelect.multiple = true
   storeSelect.id = 'storeSelect'
-  storeSelect.onchange = filterFeatures
+  storeSelect.onchange = function () { filterFeatures }
 
   //Appends all pre-calculated 'Shop type' options to the selector
   for (var i = 0; i < storesOptions.length; i++) {
@@ -2259,6 +2259,9 @@ function marketFilter(shopType, targetCategories) {
 function filterFeatures() {
   //Removes the popup if necessary
   removePopup()
+  //Resets the filtered databases
+  dataFiltered = JSON.parse(JSON.stringify(dataUnfiltered))
+  airbnbFiltered = JSON.parse(JSON.stringify(airbnbUnfiltered))
 
   //If the app is not currently in timelapse mode, grab all selected years, otherwise
   //only use the preestablished year for filtering
@@ -2271,8 +2274,19 @@ function filterFeatures() {
       yearTargets.push(yearSelecting.selectedOptions[i].value)
     }
   }
-  //Refereces the Shops checkbox
+
+  //Refereces for the checkboxes
   let addShops = document.querySelector('#Shopsbox')
+  let addAirbnbs = document.querySelector('#Airbnbsbox')
+  let sestiereSelecting = document.querySelector('#sestiereSelect')
+  let storeSelecting = document.querySelector('#storeSelect')
+  let flagged = document.querySelector('#Flaggedbox')
+  let unflagged = document.querySelector('#Unflaggedbox')
+  let openOnly = document.querySelector('#Openbox')
+  let touristOnly = document.querySelector('#Touristbox')
+  let residentOnly = document.querySelector('#Residentbox')
+  let mixedOnly = document.querySelector('#Mixedbox')
+
   //Disables all checkboxes and clears all shops data if unchecked
   if (!addShops.checked) {
     flagged.disabled = true
@@ -2294,37 +2308,25 @@ function filterFeatures() {
     mixedOnly.disabled = false
   }
 
-  //References the Airbnb checkbox
-  let addAirbnbs = document.querySelector('#Airbnbsbox')
   //Clears all airbnb data if unchecked
   if (!addAirbnbs.checked) {
     for (let i = 0; i < airbnbFiltered.length; i++) {
       airbnbFiltered[i].years = []
     }
   }
-  //References the Sestiere filter
-  const sestiereSelecting = document.querySelector('#sestiereSelect')
+
   sestiereTargets = []
   //Grabs all selected sestiere from the filter
   for (let i = 0; i < sestiereSelecting.selectedOptions.length; i++) {
     sestiereTargets.push(sestiereSelecting.selectedOptions[i].value)
   }
 
-  //References the Shop Types filter
-  const storeSelecting = document.querySelector('#storeSelect')
   storeTargets = []
   //Grabs all selected types from the filter
   for (let i = 0; i < storeSelecting.selectedOptions.length; i++) {
     storeTargets.push(storeSelecting.selectedOptions[i].value)
   }
 
-  //Resets the filtered databases
-  dataFiltered = JSON.parse(JSON.stringify(dataUnfiltered))
-  airbnbFiltered = JSON.parse(JSON.stringify(airbnbUnfiltered))
-
-  //References the Flagged and Unflagged checkboxes
-  let flagged = document.querySelector('#Flaggedbox')
-  let unflagged = document.querySelector('#Unflaggedbox')
   //If the Flagged box is checked, disable the Unflagged checkbox
   if (flagged.checked) {
     unflagged.disabled = true
@@ -2346,8 +2348,6 @@ function filterFeatures() {
   }
   else { flagged.disabled = false }
 
-  //References the Open checkbox
-  let openOnly = document.querySelector('#Openbox')
   //Checks if the Open box is checked
   if (openOnly.checked) {
     //Iterates over all locations in 'dataFiltered'
@@ -2360,10 +2360,6 @@ function filterFeatures() {
     }
   }
 
-  //References to the Tourist, Resident, and Mixed checkboxes
-  let touristOnly = document.querySelector('#Touristbox')
-  let residentOnly = document.querySelector('#Residentbox')
-  let mixedOnly = document.querySelector('#Mixedbox')
   //Stores whether or not each box is selected
   //If no box is selected, all market are shown
   let markets = []
