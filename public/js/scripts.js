@@ -230,22 +230,22 @@ function setFeatures() {
   }
   //Iterates over all shops data in the filtered database
   for (let i = 0; i < dataFiltered.length; i++) {
-    //Only creates features for shops with non-empty 'info2' arrays
-    if (dataFiltered[i].info2.length !== 0) {
+    //Only creates features for shops with non-empty 'info' arrays
+    if (dataFiltered[i].info.length !== 0) {
       //Creates a feature for every shop and appends it to the list of features
       //Each feature stores its shape, the id that corresponds to the point in the MongoDB database,
       //the address, the parent_id (the id that connects locations to entries), the name that the store
       //had in the most recent entry, an array of data about each entry, and an identifier that 
       //classifies it as a shops feature rather than an airbnb feature
       let next = new ol.Feature({
-        geometry: new ol.geom.Point(ol.proj.fromLonLat([dataFiltered[i].lng, dataFiltered[i].lat])),
-        _id: dataFiltered[i]._id,
-        address: dataFiltered[i]["address_sestiere"] + " " + dataFiltered[i]["address_num"],
-        address_street: dataFiltered[i]["address_street"],
-        address_abbr: ABBRS[dataFiltered[i]["address_sestiere"]] + " " + dataFiltered[i]["address_num"],
-        parent_id: dataFiltered[i].parent_id,
-        last_name: dataFiltered[i].info[dataFiltered[i].info.length - 1].store_name,
-        info: dataFiltered[i].info,
+        geometry: new ol.geom.Point(ol.proj.fromLonLat([dataUnfiltered[i].lng, dataUnfiltered[i].lat])),
+        _id: dataUnfiltered[i]._id,
+        address: dataUnfiltered[i]["address_sestiere"] + " " + dataUnfiltered[i]["address_num"],
+        address_street: dataUnfiltered[i]["address_street"],
+        address_abbr: ABBRS[dataUnfiltered[i]["address_sestiere"]] + " " + dataUnfiltered[i]["address_num"],
+        parent_id: dataUnfiltered[i].parent_id,
+        last_name: dataUnfiltered[i].info[dataUnfiltered[i].info.length - 1].store_name,
+        info: dataUnfiltered[i].info,
         type: "shop"
       })
       newfeatures.push(next)
@@ -721,8 +721,6 @@ function setContent(pointInfo) {
                                 //Adds the location with its non-deleted entries to dataFiltered
                                 const newInsert = json[i]
                                 newInsert.info = newInfo
-                                //Creates a duplicate of the 'info' object for filtering purposes
-                                newInsert.info2 = newInfo
                                 dataFiltered.push(newInsert)
                                 //Adds the location with its deleted and non-deleted entries to dataWithDeleted
                                 const newInsertPlusDeleted = json[i]
@@ -813,8 +811,6 @@ function setContent(pointInfo) {
                         //Adds the location with its non-deleted entries to dataFiltered
                         const newInsert = json[i]
                         newInsert.info = newInfo
-                        //Creates a duplicate of the 'info' object for filtering purposes
-                        newInsert.info2 = newInfo
                         dataFiltered.push(newInsert)
                         //Adds the location with its deleted and non-deleted entries to dataWithDeleted
                         const newInsertPlusDeleted = json[i]
@@ -1069,8 +1065,6 @@ function setContent(pointInfo) {
                             //Adds the location with its non-deleted entries to dataFiltered
                             const newInsert = json[i]
                             newInsert.info = newInfo
-                            //Creates a duplicate of the 'info' object for filtering purposes
-                            newInsert.info2 = newInfo
                             dataFiltered.push(newInsert)
                             //Adds the location with its deleted and non-deleted entries to dataWithDeleted
                             const newInsertPlusDeleted = json[i]
@@ -1160,8 +1154,6 @@ function setContent(pointInfo) {
                   //Adds the location with its non-deleted entries to dataFiltered
                   const newInsert = json[i]
                   newInsert.info = newInfo
-                  //Creates a duplicate of the 'info' object for filtering purposes
-                  newInsert.info2 = newInfo
                   dataFiltered.push(newInsert)
                   //Adds the location with its deleted and non-deleted entries to dataWithDeleted
                   const newInsertPlusDeleted = json[i]
@@ -1364,7 +1356,7 @@ function setDownload() {
     let csvData = 'ID,Latitude,Longitude,Name,Number,Address,Sestiere,Year,Type,Category,Remained Next Time?,Changed?,First?,Tourist?,Mixed?,Resident?,Artisan?\n'
     //Iterates over all the locations in the filtered dataset
     for (let i = 0; i < dataFiltered.length; i++) {
-      if (dataFiltered[i].info2.length !== 0) {
+      if (dataFiltered[i].info.length !== 0) {
         //Iterates over all entries in a given location
         for (let j = 0; j < dataFiltered[i].info.length; j++) {
           const thisInfo = dataFiltered[i].info[j]
@@ -1925,8 +1917,6 @@ function setAddLocation() {
                               //Adds the location with its non-deleted entries to dataFiltered
                               const newInsert = json[i]
                               newInsert.info = newInfo
-                              //Creates a duplicate of the 'info' object for filtering purposes
-                              newInsert.info2 = newInfo
                               dataFiltered.push(newInsert)
                               //Adds the location with its deleted and non-deleted entries to dataWithDeleted
                               const newInsertPlusDeleted = json[i]
@@ -2296,7 +2286,7 @@ function filterFeatures() {
     residentOnly.disabled = true
     mixedOnly.disabled = true
     for (let i = 0; i < dataFiltered.length; i++) {
-      dataFiltered[i].info2 = []
+      dataFiltered[i].info = []
     }
   }
   else {
@@ -2332,8 +2322,8 @@ function filterFeatures() {
     unflagged.disabled = true
     //Iterates over all locations in 'dataFiltered'
     for (let i = 0; i < dataFiltered.length; i++) {
-      //Remove all entries from the location's 'info2' array that are not flagged
-      dataFiltered[i].info2 = dataFiltered[i].info2.filter(item => item.flagged)
+      //Remove all entries from the location's 'info' array that are not flagged
+      dataFiltered[i].info = dataFiltered[i].info.filter(item => item.flagged)
     }
   }
   else { unflagged.disabled = false }
@@ -2342,8 +2332,8 @@ function filterFeatures() {
     flagged.disabled = true
     //Iterates over all locations in 'dataFiltered'
     for (let i = 0; i < dataFiltered.length; i++) {
-      //Remove all entries from the location's 'info2' array that are flagged
-      dataFiltered[i].info2 = dataFiltered[i].info2.filter(item => !item.flagged)
+      //Remove all entries from the location's 'info' array that are flagged
+      dataFiltered[i].info = dataFiltered[i].info.filter(item => !item.flagged)
     }
   }
   else { flagged.disabled = false }
@@ -2352,10 +2342,10 @@ function filterFeatures() {
   if (openOnly.checked) {
     //Iterates over all locations in 'dataFiltered'
     for (let i = 0; i < dataFiltered.length; i++) {
-      //Removes all entries from the info2 array of the location if the most recent entry
+      //Removes all entries from the info array of the location if the most recent entry
       //for that location was of type 'closed'
-      if (dataFiltered[i].info2.length !== 0 && dataFiltered[i].info2[dataFiltered[i].info2.length - 1].store_type === 'Closed') {
-        dataFiltered[i].info2 = []
+      if (dataFiltered[i].info.length !== 0 && dataFiltered[i].info[dataFiltered[i].info.length - 1].store_type === 'Closed') {
+        dataFiltered[i].info = []
       }
     }
   }
@@ -2369,15 +2359,15 @@ function filterFeatures() {
   if (markets.length === 0) { markets = ["Tourist", "Resident", "Mixed"] }
   //Iterates over all locations in 'dataFiltered'
   for (let i = 0; i < dataFiltered.length; i++) {
-    //Every entry that does not match the markets is removed from a location's 'info2' array
-    dataFiltered[i].info2 = dataFiltered[i].info2.filter(item => marketFilter(item.store_type, markets))
+    //Every entry that does not match the markets is removed from a location's 'info' array
+    dataFiltered[i].info = dataFiltered[i].info.filter(item => marketFilter(item.store_type, markets))
   }
 
   //Only filters by year if at least one year is selected
   if (yearTargets.length !== 0) {
     //Removes all shops from years that are not selected
     for (let i = 0; i < dataFiltered.length; i++) {
-      dataFiltered[i].info2 = dataFiltered[i].info2.filter(item => yearTargets.includes(String(item.year_collected)))
+      dataFiltered[i].info = dataFiltered[i].info.filter(item => yearTargets.includes(String(item.year_collected)))
     }
     //Removes all airbnbs from years that are not selected
     for (let i = 0; i < airbnbFiltered.length; i++) {
@@ -2389,7 +2379,7 @@ function filterFeatures() {
     //Removes all shops from sestiere that are not selected
     for (let i = 0; i < dataFiltered.length; i++) {
       if (!sestiereTargets.includes(dataFiltered[i].address_sestiere)) {
-        dataFiltered[i].info2 = []
+        dataFiltered[i].info = []
       }
     }
     //Removes all airbnbs from sestiere that are not selected
@@ -2403,7 +2393,7 @@ function filterFeatures() {
   if (storeTargets.length !== 0) {
     //Removes all shops with types that are not selected
     for (let i = 0; i < dataFiltered.length; i++) {
-      dataFiltered[i].info2 = dataFiltered[i].info2.filter(item => storeTargets.includes(item.store_type))
+      dataFiltered[i].info = dataFiltered[i].info.filter(item => storeTargets.includes(item.store_type))
     }
   }
 
@@ -2446,8 +2436,6 @@ window.onload = function () {
             //Adds the location with its non-deleted entries to dataFiltered
             const newInsert = json[i]
             newInsert.info = newInfo
-            //Creates a duplicate of the 'info' object for filtering purposes
-            newInsert.info2 = newInfo
             dataFiltered.push(newInsert)
             //Adds the location with its deleted and non-deleted entries to dataWithDeleted
             const newInsertPlusDeleted = json[i]
