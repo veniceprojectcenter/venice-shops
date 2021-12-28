@@ -2317,26 +2317,29 @@ function filterFeatures() {
     storeTargets.push(storeSelecting.selectedOptions[i].value)
   }
 
-  //If the Flagged box is checked, disable the Unflagged checkbox
-  if (flagged.checked) {
-    unflagged.disabled = true
-    //Iterates over all locations in 'dataFiltered'
-    for (let i = 0; i < dataFiltered.length; i++) {
-      //Remove all entries from the location's 'info' array that are not flagged
-      dataFiltered[i].info = dataFiltered[i].info.filter(item => item.flagged)
+  //Only change the enabling/disabling of shops checkboxes if shops are shown
+  if (addShops.checked) {
+    //If the Flagged box is checked, disable the Unflagged checkbox
+    if (flagged.checked) {
+      unflagged.disabled = true
+      //Iterates over all locations in 'dataFiltered'
+      for (let i = 0; i < dataFiltered.length; i++) {
+        //Remove all entries from the location's 'info' array that are not flagged
+        dataFiltered[i].info = dataFiltered[i].info.filter(item => item.flagged)
+      }
     }
-  }
-  else { unflagged.disabled = false }
-  //If the Unflagged box is checked, disable the Flagged checkbox
-  if (unflagged.checked) {
-    flagged.disabled = true
-    //Iterates over all locations in 'dataFiltered'
-    for (let i = 0; i < dataFiltered.length; i++) {
-      //Remove all entries from the location's 'info' array that are flagged
-      dataFiltered[i].info = dataFiltered[i].info.filter(item => !item.flagged)
+    else { unflagged.disabled = false }
+    //If the Unflagged box is checked, disable the Flagged checkbox
+    if (unflagged.checked) {
+      flagged.disabled = true
+      //Iterates over all locations in 'dataFiltered'
+      for (let i = 0; i < dataFiltered.length; i++) {
+        //Remove all entries from the location's 'info' array that are flagged
+        dataFiltered[i].info = dataFiltered[i].info.filter(item => !item.flagged)
+      }
     }
+    else { flagged.disabled = false }
   }
-  else { flagged.disabled = false }
 
   //Checks if the Open box is checked
   if (openOnly.checked) {
