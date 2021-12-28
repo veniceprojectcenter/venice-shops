@@ -2056,7 +2056,7 @@ function setSestiereFilter() {
   const sestiereSelect = document.createElement('select')
   sestiereSelect.multiple = true
   sestiereSelect.id = 'sestiereSelect'
-  sestiereSelect.onchange = function () { filterFeatures }
+  sestiereSelect.onchange = function () { filterFeatures() }
 
   //Appends all pre-calculated 'Sestiere' options to the selector
   for (var i = 0; i < sestiereOptions.length; i++) {
@@ -2086,7 +2086,7 @@ function setStoreFilter() {
   const storeSelect = document.createElement('select')
   storeSelect.multiple = true
   storeSelect.id = 'storeSelect'
-  storeSelect.onchange = function () { filterFeatures }
+  storeSelect.onchange = function () { filterFeatures() }
 
   //Appends all pre-calculated 'Shop type' options to the selector
   for (var i = 0; i < storesOptions.length; i++) {
