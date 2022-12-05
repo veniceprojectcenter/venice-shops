@@ -9,7 +9,7 @@ const express = require("express"),
   {google} = require('googleapis'),
   KEYFILEPATH = __dirname + '/googleKey2.json',
   SCOPES = ['https://www.googleapis.com/auth/drive'],
-  port = 3003;
+  port = 3000;
 
 //MongoDB setup
 const uri = "mongodb+srv://mapuser:mapuser@cluster0.0k894.mongodb.net/"

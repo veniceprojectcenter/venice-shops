@@ -2107,18 +2107,21 @@ function setStoreFilter() {
   });
 }
 
-//Sets up the Timelapse buttons
+///Sets up the Timelapse buttons
 function setTimelapse() {
+  //tartTimelapse()
   //Reference to the Start Cycle button
   const timelapseButton = document.querySelector('#timelapseButton')
   //Button press event listener, calls 'StartTimelapse'
-  timelapseButton.onclick = function () { startTimelapse }
+  //timelapseButton.onclick = startTimelapse()
+  timelapseButton.onclick = function () { startTimelapse() }
   timelapseButton.style.backgroundColor = "gainsboro"
 
   //Reference to the Stop Cycle button
   const stopTimelapseButton = document.querySelector('#stopTimelapseButton')
   //Button press event listener, calls 'StopTimelapse'
-  stopTimelapseButton.onclick = function () { stopTimelapse }
+  stopTimelapseButton.onclick = function () { stopTimelapse() }
+      //stopTimelapseButton.onclick = stopTimelapse()
   stopTimelapseButton.style.backgroundColor = "grey"
   //Disables the button by default
   stopTimelapseButton.disabled = true
@@ -2180,32 +2183,6 @@ function startTimelapse() {
       if (yearIndex === allYearTargets.length) { yearIndex = 0 }
     }, CYCLETIME)
   }
-}
-
-//Stops the timelapse
-function stopTimelapse() {
-  //Resets the timelapse index and relevant flags
-  yearIndex = 0
-  timelapsing = false
-  paused = false
-  //Stops timelapsing
-  clearInterval(timelapseInterval)
-  //References the Start Cycle button and resets its label
-  const timelapseButton = document.querySelector('#timelapseButton')
-  timelapseButton.innerText = 'Cycle Years'
-  timelapseButton.onclick = startTimelapse
-
-  //References and clears the year display
-  const yearDisplay = document.querySelector('#yearDisplay')
-  yearDisplay.innerText = ''
-
-  //References and disables the Stop Timelapse button
-  const stopTimelapseButton = document.querySelector('#stopTimelapseButton')
-  stopTimelapseButton.style.backgroundColor = "grey"
-  stopTimelapseButton.disabled = true
-
-  //Refilters the data to undo the effect of the timelapse
-  filterFeatures()
 }
 
 //Sets up the Change Size button
