@@ -2185,6 +2185,33 @@ function startTimelapse() {
   }
 }
 
+
+//Stops the timelapse
+function stopTimelapse() {
+  //Resets the timelapse index and relevant flags
+  yearIndex = 0
+  timelapsing = false
+  paused = false
+  //Stops timelapsing
+  clearInterval(timelapseInterval)
+  //References the Start Cycle button and resets its label
+  const timelapseButton = document.querySelector('#timelapseButton')
+  timelapseButton.innerText = 'Cycle Years'
+  //timelapseButton.onclick = startTimelapse()
+
+  //References and clears the year display
+  const yearDisplay = document.querySelector('#yearDisplay')
+  yearDisplay.innerText = ''
+
+  //References and disables the Stop Timelapse button
+  const stopTimelapseButton = document.querySelector('#stopTimelapseButton')
+  stopTimelapseButton.style.backgroundColor = "grey"
+  stopTimelapseButton.disabled = true
+
+  //Refilters the data to undo the effect of the timelapse
+  filterFeatures()
+}
+
 //Sets up the Change Size button
 function setChangeSize() {
   //References to the change size button and its image
