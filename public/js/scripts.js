@@ -290,7 +290,7 @@ function setMap() {
     layers: [
       new ol.layer.Tile({
         source: new ol.source.XYZ({
-          url: 'https://api.mapbox.com/styles/v1/mapbox/light-v10/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA#1.07/0/0'
+          url: 'https://api.mapbox.com/v4/mapbox.satellite/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoidmVuaWNlcHJvamVjdGNlbnRlciIsImEiOiJjbG8ycHh0YnMxem1iMnJxb2d6em5jYmJ3In0.GTy8EsQFFJWEPWH8Ifr0Ag'
         })
       })
     ],
