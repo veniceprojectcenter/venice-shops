@@ -1219,7 +1219,7 @@ function setContent(pointInfo) {
   }
   //Appends image, street address, type, and note displays to the div
   displayedInfo.innerHTML = displayedInfo.innerHTML
-    + '<img src="' + currInfo.image_url + '" id="oldImagePreview" width="200px" height="200px">'
+    + '<img src="' + currInfo.image_url.replace("uc?id=", "thumbnail?id=") + '" id="oldImagePreview" width="200px" height="200px">'
     + '<h3>' + currInfo.address_street + '</h3>'
     + '<h3>' + currInfo.store_type + '</h3>'
     + '<p>' + currInfo.note + '</p>'
