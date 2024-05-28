@@ -2312,16 +2312,20 @@ function setChangeSize() {
 }
 
 //Determines whether or not an entry's type fits within a set of markets
-function marketFilter(shopType, targetCategories) {
-  //for (let k = 0; k < typesDatabase.length; k++) {
-  //  if (typesDatabase[k].type === shopType) {
+function marketFilter(item, targetCategories) {
+  for (let k = 0; k < item.info.length; k++) {
+    if (targetCategories.includes(item.info[k].group_type)) {
+      return true
+    }
+  }
+  return false
   //    if (targetCategories.includes(typesDatabase[k].category)) { return true }
   //    else { return false }
   //  }
 
   //}
-  if (targetCategories.includes(shopType)) {return true}
-  else {return false}
+  //if (targetCategories.includes(shopType)) {return true}
+
 }
 
 //Filters the data based on the dropdown and checkbox filters
@@ -2446,11 +2450,14 @@ function filterFeatures() {
   if (mixedOnly.checked) { markets.push("Mixed") }
   if (mostlyResidentOnly.checked) { markets.push("Mostly Resident") }
   if (mostlyTouristOnly.checked) { markets.push("Mostly Tourist") }
-  if (markets.length === 0) { markets = ["Mostly Tourist","Mostly Resident","Tourist", "Resident", "Mixed"] }
+  if (markets.length === 0) { markets = ["Mostly Tourist","Mostly Resident","Tourist", "Resident", "Mixed", "Undefined"] }
+  else{
   //Iterates over all locations in 'dataFiltered'
   for (let i = 0; i < dataFiltered.length; i++) {
     //Every entry that does not match the markets is removed from a location's 'info' array
-    dataFiltered[i].info = dataFiltered[i].info.filter(item => marketFilter(item.group_type, markets))
+    //dataFiltered[i].info = dataFiltered[i].info.filter(item => marketFilter(item.group_type, markets))
+    dataFiltered = dataFiltered.filter(dataitem => marketFilter(dataitem,markets))
+    }
   }
 
   //Only filters by year if at least one year is selected
@@ -2459,6 +2466,7 @@ function filterFeatures() {
     for (let i = 0; i < dataFiltered.length; i++) {
       dataFiltered[i].info = dataFiltered[i].info.filter(item => yearTargets.includes(String(item.year_collected)))
     }
+
     //Removes all airbnbs from years that are not selected
     for (let i = 0; i < airbnbFiltered.length; i++) {
       airbnbFiltered[i].years = airbnbFiltered[i].years.filter(item => yearTargets.includes(String(item)) || yearTargets.includes(String(item) + ' (Airbnb only)'))
