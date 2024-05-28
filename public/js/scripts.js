@@ -2060,6 +2060,16 @@ function setCheckboxes() {
   const mixedBox = document.querySelector('#Mixedbox')
   mixedBox.addEventListener("change", filterFeatures)
 
+  const mostlyResidentFilter = document.querySelector('#mostlyResidentFilter')
+  mostlyResidentFilter.innerHTML = setCheckboxHTML('MostlyResident')
+  const mostlyResidentBox = document.querySelector('#MostlyResidentbox')
+  mostlyResidentBox.addEventListener("change", filterFeatures)
+
+  const mostlyTouristFilter = document.querySelector('#mostlyTouristFilter')
+  mostlyTouristFilter.innerHTML = setCheckboxHTML('MostlyTourist')
+  const mostlyTouristBox = document.querySelector('#MostlyTouristbox')
+  mostlyTouristBox.addEventListener("change", filterFeatures)
+
   //Creates the filter for features that are of type 'shop'
   const shopsFilter = document.querySelector('#shopsFilter')
   shopsFilter.innerHTML = setCheckboxHTML('Shops')
@@ -2303,13 +2313,15 @@ function setChangeSize() {
 
 //Determines whether or not an entry's type fits within a set of markets
 function marketFilter(shopType, targetCategories) {
-  for (let k = 0; k < typesDatabase.length; k++) {
-    if (typesDatabase[k].type === shopType) {
-      if (targetCategories.includes(typesDatabase[k].category)) { return true }
-      else { return false }
-    }
-  }
-  return false
+  //for (let k = 0; k < typesDatabase.length; k++) {
+  //  if (typesDatabase[k].type === shopType) {
+  //    if (targetCategories.includes(typesDatabase[k].category)) { return true }
+  //    else { return false }
+  //  }
+
+  //}
+  if (targetCategories.includes(shopType)) {return true}
+  else {return false}
 }
 
 //Filters the data based on the dropdown and checkbox filters
@@ -2343,6 +2355,8 @@ function filterFeatures() {
   let touristOnly = document.querySelector('#Touristbox')
   let residentOnly = document.querySelector('#Residentbox')
   let mixedOnly = document.querySelector('#Mixedbox')
+  let mostlyTouristOnly = document.querySelector('#MostlyTouristbox')
+  let mostlyResidentOnly = document.querySelector('#MostlyResidentbox')
 
   //Disables all checkboxes and clears all shops data if unchecked
   if (!addShops.checked) {
@@ -2352,6 +2366,8 @@ function filterFeatures() {
     touristOnly.disabled = true
     residentOnly.disabled = true
     mixedOnly.disabled = true
+    mostlyTouristOnly.disabled = true
+    mostlyResidentOnly.disabled = true
     for (let i = 0; i < dataFiltered.length; i++) {
       dataFiltered[i].info = []
     }
@@ -2363,6 +2379,8 @@ function filterFeatures() {
     touristOnly.disabled = false
     residentOnly.disabled = false
     mixedOnly.disabled = false
+    mostlyTouristOnly.disabled = false
+    mostlyResidentOnly.disabled = false
   }
 
   //Clears all airbnb data if unchecked
@@ -2426,11 +2444,13 @@ function filterFeatures() {
   if (touristOnly.checked) { markets.push("Tourist") }
   if (residentOnly.checked) { markets.push("Resident") }
   if (mixedOnly.checked) { markets.push("Mixed") }
-  if (markets.length === 0) { markets = ["Tourist", "Resident", "Mixed"] }
+  if (mostlyResidentOnly.checked) { markets.push("Mostly Resident") }
+  if (mostlyTouristOnly.checked) { markets.push("Mostly Tourist") }
+  if (markets.length === 0) { markets = ["Mostly Tourist","Mostly Resident","Tourist", "Resident", "Mixed"] }
   //Iterates over all locations in 'dataFiltered'
   for (let i = 0; i < dataFiltered.length; i++) {
     //Every entry that does not match the markets is removed from a location's 'info' array
-    dataFiltered[i].info = dataFiltered[i].info.filter(item => marketFilter(item.store_type, markets))
+    dataFiltered[i].info = dataFiltered[i].info.filter(item => marketFilter(item.group_type, markets))
   }
 
   //Only filters by year if at least one year is selected
