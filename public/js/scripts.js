@@ -595,6 +595,27 @@ function setContent(pointInfo) {
     //Adds the grid to the popup
     content.appendChild(inputGrid)
 
+    //all the group type thingies
+    const groupTypeLabel = document.createElement("label")
+    groupTypeLabel.setAttribute("for", "storeInput")
+    groupTypeLabel.innerText = "Group:"
+    inputGrid.appendChild(groupTypeLabel)
+    const groupTypeInput = document.createElement("select")
+    groupTypeInput.setAttribute("id", "groupTypeInput")
+    groupTypeInput.setAttribute("name", "groupTypeInput")
+    const dropdownOptions = ['Tourist', 'Mostly Tourist', 'Mixed', 'Mostly Resident','Resident']
+    dropdownOptions.forEach(optionText => {
+      const option = document.createElement('option');
+      option.value = optionText;
+      option.textContent = optionText;
+      groupTypeInput.appendChild(option);
+    });
+    inputGrid.appendChild(groupTypeInput)
+    const clearGroupType = document.createElement("button")
+    clearGroupType.innerText = "Clear"
+    clearGroupType.onclick = function () { groupTypeInput.value = "Mixed" }
+    inputGrid.appendChild(clearGroupType)
+
     //Creates a checkbox to allow entries to be flagged
     const flagLabel = document.createElement("label")
     flagLabel.setAttribute("for", "flagbox")
@@ -681,7 +702,7 @@ function setContent(pointInfo) {
                     image: response.data.webContentLink,
                     year: parseInt(yearInput.value, 10),
                     store: storeInput.value,
-                    group: "Undefined",
+                    group: groupTypeInput.value,
                     nace: "Undefined",
                     index: popupIndex
                   }
@@ -944,6 +965,27 @@ function setContent(pointInfo) {
     inputGrid.appendChild(clearNote)
     content.appendChild(inputGrid)
 
+    //all the group type thingies
+    const groupTypeLabel = document.createElement("label")
+    groupTypeLabel.setAttribute("for", "storeInput")
+    groupTypeLabel.innerText = "Group:"
+    inputGrid.appendChild(groupTypeLabel)
+    const groupTypeInput = document.createElement("select")
+    groupTypeInput.setAttribute("id", "groupTypeInput")
+    groupTypeInput.setAttribute("name", "groupTypeInput")
+    const dropdownOptions = ['Tourist', 'Mostly Tourist', 'Mixed', 'Mostly Resident','Resident']
+    dropdownOptions.forEach(optionText => {
+      const option = document.createElement('option');
+      option.value = optionText;
+      option.textContent = optionText;
+      groupTypeInput.appendChild(option);
+    });
+    inputGrid.appendChild(groupTypeInput)
+    const clearGroupType = document.createElement("button")
+    clearGroupType.innerText = "Clear"
+    clearGroupType.onclick = function () { groupTypeInput.value = "Mixed" }
+    inputGrid.appendChild(clearGroupType)
+
     //Creates a checkbox for flagging entries
     const flagLabel = document.createElement("label")
     flagLabel.setAttribute("for", "flagbox")
@@ -1027,7 +1069,7 @@ function setContent(pointInfo) {
                   image: response.data.webContentLink,
                   year: parseInt(yearInput.value, 10),
                   store: storeInput.value,
-                  group: "Undefined",
+                  group: groupTypeInput.value,
                   nace: "Undefined"
                 }
                 //Calls the '/add' method
@@ -1775,7 +1817,7 @@ function setAddLocation() {
     clearStore.onclick = function () { storeInput.value = "Closed" }
     inputGrid2.appendChild(clearStore)
 
-    //Creates a not input
+    //Creates a note input
     const noteLabel = document.createElement("label")
     noteLabel.setAttribute("for", "noteInput")
     noteLabel.innerText = "Note:"
@@ -1789,6 +1831,27 @@ function setAddLocation() {
     clearNote.onclick = function () { noteInput.value = "" }
     inputGrid2.appendChild(clearNote)
     content.appendChild(inputGrid2)
+
+    //all the group type thingies
+    const groupTypeLabel = document.createElement("label")
+    groupTypeLabel.setAttribute("for", "storeInput")
+    groupTypeLabel.innerText = "Group:"
+    inputGrid2.appendChild(groupTypeLabel)
+    const groupTypeInput = document.createElement("select")
+    groupTypeInput.setAttribute("id", "groupTypeInput")
+    groupTypeInput.setAttribute("name", "groupTypeInput")
+    const dropdownOptions = ['Tourist', 'Mostly Tourist', 'Mixed', 'Mostly Resident','Resident']
+    dropdownOptions.forEach(optionText => {
+      const option = document.createElement('option');
+      option.value = optionText;
+      option.textContent = optionText;
+      groupTypeInput.appendChild(option);
+    });
+    inputGrid2.appendChild(groupTypeInput)
+    const clearGroupType = document.createElement("button")
+    clearGroupType.innerText = "Clear"
+    clearGroupType.onclick = function () { groupTypeInput.value = "Mixed" }
+    inputGrid2.appendChild(clearGroupType)
 
     //Creates a checkbox for flagging 
     const flagLabel = document.createElement("label")
@@ -1882,7 +1945,7 @@ function setAddLocation() {
                   image: response.data.webContentLink,
                   year: parseInt(yearInput.value, 10),
                   store: storeInput.value,
-                  group: "Undefined",
+                  group: groupTypeInput.value,
                   nace: "Undefined"
                 }
                 //Calls the '/addLoc' method
