@@ -6,7 +6,7 @@ const express = require("express"),
     favicon = require("serve-favicon"),
     { Pool } = require("pg");
 
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 // PostgreSQL setup
 const pool = new Pool({
